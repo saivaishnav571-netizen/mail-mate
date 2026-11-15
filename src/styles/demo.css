@@ -154,9 +154,15 @@
   letter-spacing: 0;
 }
 
+.app-count--quiet {
+  background: rgba(244, 238, 225, 0.16);
+  color: rgba(244, 238, 225, 0.86);
+}
+
 .app-body {
   display: grid;
   grid-template-columns: 188px 326px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   height: 636px;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -171,6 +177,7 @@
   flex-direction: column;
   justify-content: space-between;
   min-width: 0;
+  min-height: 0;
   padding: 18px 12px 15px;
   border-right: 1px solid var(--line);
   background: #f1e9da;
@@ -299,6 +306,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   border-right: 1px solid var(--line);
   background: #f8f2e7;
 }
@@ -326,7 +335,7 @@
 .search input {
   width: 100%;
   height: 36px;
-  padding: 0 10px 0 31px;
+  padding: 0 34px 0 31px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--card);
@@ -334,6 +343,23 @@
   font-size: 12px;
   line-height: 1;
   transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.search-kbd {
+  position: absolute;
+  right: 9px;
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #f1e9da;
+  color: var(--faint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .search input::placeholder {
@@ -364,7 +390,62 @@
   overscroll-behavior: contain;
   list-style: none;
   scrollbar-width: thin;
-  scrollbar-color: rgba(34, 30, 25, 0.2) transparent;
+  scrollbar-color: rgba(34, 30, 25, 0.26) transparent;
+}
+
+.mail-list::-webkit-scrollbar,
+.detail-scroll::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+.mail-list::-webkit-scrollbar-track,
+.detail-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mail-list::-webkit-scrollbar-thumb,
+.detail-scroll::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: rgba(34, 30, 25, 0.28);
+  background-clip: padding-box;
+}
+
+.mail-list::-webkit-scrollbar-thumb:hover,
+.detail-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(34, 30, 25, 0.46);
+  background-clip: padding-box;
+}
+
+.mail-list.has-scroll-up,
+.detail-scroll.has-scroll-up {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 16px);
+}
+
+.mail-list.has-scroll-down,
+.detail-scroll.has-scroll-down {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent 100%);
+}
+
+.mail-list.has-scroll-up.has-scroll-down,
+.detail-scroll.has-scroll-up.has-scroll-down {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 16px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 16px,
+    #000 calc(100% - 20px),
+    transparent 100%
+  );
 }
 
 .mail-item {
@@ -566,6 +647,8 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   background: var(--card);
 }
 
@@ -742,7 +825,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
-  scrollbar-color: rgba(34, 30, 25, 0.2) transparent;
+  scrollbar-color: rgba(34, 30, 25, 0.26) transparent;
 }
 
 .mail-body {
@@ -762,9 +845,59 @@
 
 .analysis-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px 10px;
+}
+
+.analysis-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+}
+
+.bucket-edit {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bucket-edit-label {
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.bucket-select {
+  min-height: 24px;
+  padding: 0 20px 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffdf8;
+  color: var(--ink-soft);
+  font-size: 9.5px;
+  cursor: pointer;
+  appearance: none;
+}
+
+.bucket-select:hover {
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.bucket-edit::after {
+  content: "▾";
+  position: absolute;
+  right: 7px;
+  font-size: 8px;
+  color: var(--faint);
+  pointer-events: none;
 }
 
 .analysis-card h4,
@@ -825,6 +958,44 @@
   border: 1px solid var(--line);
   border-radius: 11px;
   background: #fbf7ee;
+}
+
+.extract-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 8px;
+}
+
+.extract-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.micro-action {
+  display: inline-flex;
+  align-items: center;
+  min-height: 21px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 7px;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.micro-action:hover {
+  border-color: var(--line-strong);
+  background: rgba(255, 253, 248, 0.8);
+  color: var(--ink);
 }
 
 .deadline-value {

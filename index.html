@@ -164,6 +164,10 @@
               </div>
               <p class="app-status" data-statusline>Loading the test inbox…</p>
               <div class="app-actions">
+                <button class="app-action" type="button" data-activity-toggle>
+                  Activity
+                  <span class="app-count app-count--quiet" data-activity-total>0</span>
+                </button>
                 <button class="app-action" type="button" data-reminders-toggle>
                   Reminders
                   <span class="app-count" data-reminder-count>0</span>
@@ -230,6 +234,7 @@
                       aria-label="Search messages"
                       data-search
                     />
+                    <kbd class="search-kbd" aria-hidden="true">/</kbd>
                   </label>
                   <p class="result-count" data-result-count aria-live="polite">Loading…</p>
                 </div>
@@ -286,7 +291,17 @@
                     <section class="analysis-card" aria-labelledby="why-heading">
                       <div class="analysis-head">
                         <h4 id="why-heading">Why this bucket</h4>
-                        <span class="analysis-tag" data-detail-category-label>—</span>
+                        <div class="analysis-tools">
+                          <span class="analysis-tag" data-detail-category-label>—</span>
+                          <label class="bucket-edit">
+                            <span class="bucket-edit-label">Bucket</span>
+                            <select
+                              class="bucket-select"
+                              data-category-override
+                              aria-label="Change this message's bucket"
+                            ></select>
+                          </label>
+                        </div>
                       </div>
                       <p class="analysis-summary" data-detail-reason>—</p>
                       <ul class="reason-list" data-detail-reasons></ul>
@@ -294,7 +309,17 @@
 
                     <div class="extract-grid">
                       <section class="extract-card">
-                        <h4>Deadline</h4>
+                        <div class="extract-head">
+                          <h4>Deadline</h4>
+                          <div class="extract-actions">
+                            <button class="micro-action" type="button" data-deadline-calendar hidden>
+                              Calendar
+                            </button>
+                            <button class="micro-action" type="button" data-deadline-clear hidden>
+                              Clear
+                            </button>
+                          </div>
+                        </div>
                         <p class="deadline-value" data-detail-deadline>None found</p>
                         <p class="extract-note" data-detail-deadline-note>No date cue in this message.</p>
                       </section>
@@ -342,8 +367,8 @@
           <div class="demo-foot">
             <p>
               This demo is deterministic and offline. Classification uses keyword and sender
-              signals; deadlines use date cues in the text. It is a working prototype, not a
-              production mail client.
+              signals; deadlines use date cues in the text. Your session — bucket changes, drafts,
+              reminders and the activity log — stays in this browser, and no email is ever sent.
             </p>
             <div class="demo-foot-actions">
               <button class="text-link" type="button" data-open-upload>Upload your own JSON or CSV</button>
@@ -1011,6 +1036,63 @@
         <p class="reminder-empty" data-reminder-empty hidden>
           No open reminders. Every deadline in this inbox has been handled.
         </p>
+      </div>
+    </dialog>
+
+    <dialog class="modal activity-modal" id="activity-dialog" aria-labelledby="activity-dialog-title">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Local record</p>
+            <h2 id="activity-dialog-title">Activity log</h2>
+          </div>
+          <button class="modal-close" type="button" data-activity-close aria-label="Close activity log">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <p class="modal-intro">
+          Bucket changes, deadline edits, reminders and simulated sends are recorded here. The log
+          lives in this browser and is never uploaded.
+        </p>
+        <div class="activity-toolbar">
+          <span class="activity-count" data-activity-count>0 events</span>
+          <div class="activity-tools">
+            <button class="text-link" type="button" data-activity-export>Export JSON</button>
+            <button class="text-link" type="button" data-activity-clear>Clear log</button>
+          </div>
+        </div>
+        <ul class="activity-list" data-activity-list></ul>
+        <p class="activity-empty" data-activity-empty hidden>
+          No activity yet. Open a message, change a bucket, or approve a simulated reply.
+        </p>
+      </div>
+    </dialog>
+
+    <dialog class="modal reset-modal" id="reset-dialog" aria-labelledby="reset-dialog-title">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Start over</p>
+            <h2 id="reset-dialog-title">Reset this session?</h2>
+          </div>
+          <button class="modal-close" type="button" data-reset-close aria-label="Close reset dialog">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <p class="modal-intro">
+          This clears the saved session in this browser: replies, bucket changes, deadline edits,
+          reminders and the activity log. The 24-message test inbox is loaded again.
+        </p>
+        <p class="reset-summary" data-reset-summary>—</p>
+        <div class="modal-actions">
+          <button class="btn btn-quiet" type="button" data-reset-cancel>Keep working</button>
+          <button class="btn btn-primary" type="button" data-reset-confirm>Reset demo</button>
+        </div>
+        <p class="modal-note">Nothing outside this page is deleted. Uploaded files are not kept.</p>
       </div>
     </dialog>
 
