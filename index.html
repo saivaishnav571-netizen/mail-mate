@@ -1,0 +1,1023 @@
+<!doctype html>
+<html lang="en" data-type="software">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MailMate — the email triage agent that sorts before you open</title>
+    <meta
+      name="description"
+      content="MailMate sorts email into five buckets, extracts deadlines and next actions, and drafts replies. Every send needs your approval. Try the 24-message demo in your browser."
+    />
+    <meta name="page-type" content="software" />
+    <meta name="site-kind" content="software" />
+    <meta name="theme-color" content="#f4eee1" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="MailMate — your inbox, already sorted" />
+    <meta
+      property="og:description"
+      content="Five buckets, extracted deadlines, drafted replies. Nothing sends without your approval."
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script type="module" src="/src/main.js"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#demo">Skip to the live inbox demo</a>
+
+    <header class="site-header" data-header>
+      <div class="wrap nav-shell">
+        <a class="brand" href="#top" aria-label="MailMate, back to top">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 26" fill="none">
+              <rect x="1" y="1" width="30" height="24" rx="5" fill="currentColor" />
+              <path d="M4 6.5 16 16 28 6.5" stroke="#fbf7ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <path d="m4 20 8.5-7M28 20l-8.5-7" stroke="#fbf7ee" stroke-width="1.6" stroke-linecap="round" opacity=".55" />
+            </svg>
+          </span>
+          <span class="brand-name">MailMate</span>
+          <span class="brand-beta">beta</span>
+        </a>
+
+        <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+          <a href="#demo">Live inbox</a>
+          <a href="#how">How it works</a>
+          <a href="#approval">Approval</a>
+          <a href="#data">Your data</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+
+        <div class="nav-actions">
+          <a class="btn btn-primary btn-sm nav-cta" href="#demo">
+            Open the inbox
+            <span aria-hidden="true">→</span>
+          </a>
+          <button
+            class="nav-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="site-nav"
+            data-nav-toggle
+          >
+            <span class="nav-toggle-label">Menu</span>
+            <span class="nav-toggle-icon" aria-hidden="true"><i></i><i></i></span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="top">
+      <!-- Hero -->
+      <section class="hero" data-enter aria-labelledby="hero-title">
+        <div class="wrap hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow hero-eyebrow">
+              <span class="live-dot" aria-hidden="true"></span>
+              Email triage agent · private beta
+            </p>
+            <h1 id="hero-title">
+              Your inbox,<br />
+              <span class="h1-accent">already sorted.</span>
+            </h1>
+            <p class="lede">
+              MailMate reads each message, files it into one of five buckets, pulls out the
+              deadline and next action, and writes a reply. You edit it, approve it, and decide
+              what sends.
+            </p>
+            <div class="hero-actions">
+              <a class="btn btn-primary" href="#demo">
+                Try the live inbox
+                <span aria-hidden="true">→</span>
+              </a>
+              <a class="btn btn-ghost" href="#how">See the pipeline</a>
+            </div>
+            <dl class="hero-facts" aria-label="Demo facts">
+              <div>
+                <dt>24</dt>
+                <dd>demo messages</dd>
+              </div>
+              <div>
+                <dt>5</dt>
+                <dd>sorting buckets</dd>
+              </div>
+              <div>
+                <dt>0</dt>
+                <dd>sends without you</dd>
+              </div>
+            </dl>
+            <p class="privacy-note">
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                <rect x="4.5" y="8.5" width="11" height="8" rx="2" stroke="currentColor" stroke-width="1.5" />
+                <path d="M7 8.5V6.6a3 3 0 0 1 6 0v1.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                <circle cx="10" cy="12.4" r="1.1" fill="currentColor" />
+              </svg>
+              Runs in your browser. No mailbox connection needed.
+            </p>
+          </div>
+
+          <div class="hero-visual" data-visual>
+            <div class="scene-frame">
+              <canvas id="hero-canvas" aria-hidden="true"></canvas>
+              <div class="scene-fallback" data-scene-fallback hidden aria-hidden="true">
+                <div class="fallback-stack">
+                  <span class="fallback-letter f1"></span>
+                  <span class="fallback-letter f2"></span>
+                  <span class="fallback-letter f3"></span>
+                  <span class="fallback-tray">SORTED</span>
+                </div>
+              </div>
+              <div class="scene-status" aria-hidden="true">
+                <span class="scene-status-dot"></span>
+                <span>Sorting table · live</span>
+              </div>
+              <button class="scene-control" type="button" data-scene-pause aria-pressed="false">
+                Pause scene
+              </button>
+              <div class="scene-sheen" aria-hidden="true"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Live demo -->
+      <section class="section demo-section" id="demo" aria-labelledby="demo-title">
+        <div class="wrap">
+          <div class="section-head section-head--split">
+            <div>
+              <p class="eyebrow">The live inbox</p>
+              <h2 id="demo-title">A working inbox,<br />not a screenshot.</h2>
+            </div>
+            <div class="section-head-copy">
+              <p>
+                Twenty-four messages, written for this demo. Filter the buckets, open one, read
+                the extracted deadline, edit the draft, then approve a simulated send.
+              </p>
+              <p class="micro-note">
+                Demo clock: 15 Nov 2026, 09:00 · <span data-demo-label>Test inbox</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="app-frame" data-demo>
+            <div class="app-bar">
+              <div class="app-ident">
+                <span class="app-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="app-title">MailMate <span>/ triage desk</span></span>
+              </div>
+              <p class="app-status" data-statusline>Loading the test inbox…</p>
+              <div class="app-actions">
+                <button class="app-action" type="button" data-reminders-toggle>
+                  Reminders
+                  <span class="app-count" data-reminder-count>0</span>
+                </button>
+                <button class="app-action" type="button" data-upload-trigger>Upload</button>
+                <button class="app-action" type="button" data-reset>Reset</button>
+              </div>
+            </div>
+
+            <div class="app-body">
+              <aside class="app-side" aria-label="Inbox filters">
+                <div class="side-group">
+                  <p class="side-label">Buckets</p>
+                  <div class="filter-list" data-filters>
+                    <button class="filter is-active" type="button" data-category="all" aria-pressed="true">
+                      <span class="filter-name"><span class="filter-dot filter-dot--all"></span>All mail</span>
+                      <span class="filter-count" data-count="all">0</span>
+                    </button>
+                    <button class="filter" type="button" data-category="important" aria-pressed="false">
+                      <span class="filter-name"><span class="filter-dot cat-bg-important"></span>Important</span>
+                      <span class="filter-count" data-count="important">0</span>
+                    </button>
+                    <button class="filter" type="button" data-category="academic" aria-pressed="false">
+                      <span class="filter-name"><span class="filter-dot cat-bg-academic"></span>Academic</span>
+                      <span class="filter-count" data-count="academic">0</span>
+                    </button>
+                    <button class="filter" type="button" data-category="internship" aria-pressed="false">
+                      <span class="filter-name"><span class="filter-dot cat-bg-internship"></span>Internship</span>
+                      <span class="filter-count" data-count="internship">0</span>
+                    </button>
+                    <button class="filter" type="button" data-category="personal" aria-pressed="false">
+                      <span class="filter-name"><span class="filter-dot cat-bg-personal"></span>Personal</span>
+                      <span class="filter-count" data-count="personal">0</span>
+                    </button>
+                    <button class="filter" type="button" data-category="spam" aria-pressed="false">
+                      <span class="filter-name"><span class="filter-dot cat-bg-spam"></span>Spam</span>
+                      <span class="filter-count" data-count="spam">0</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="side-group side-summary">
+                  <p class="side-label">At a glance</p>
+                  <dl class="summary-list">
+                    <div><dt>Unread</dt><dd data-stat-unread>—</dd></div>
+                    <div><dt>Due soon</dt><dd data-stat-due>—</dd></div>
+                    <div><dt>Drafts</dt><dd data-stat-drafts>—</dd></div>
+                    <div><dt>Replied</dt><dd data-stat-replied>—</dd></div>
+                  </dl>
+                  <p class="side-foot">Sends are simulated and logged on this page only.</p>
+                </div>
+              </aside>
+
+              <div class="mail-pane">
+                <div class="mail-tools">
+                  <label class="search">
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                      <circle cx="9" cy="9" r="5.25" stroke="currentColor" stroke-width="1.6" />
+                      <path d="m13 13 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                    </svg>
+                    <input
+                      type="search"
+                      placeholder="Search sender, subject, text"
+                      aria-label="Search messages"
+                      data-search
+                    />
+                  </label>
+                  <p class="result-count" data-result-count aria-live="polite">Loading…</p>
+                </div>
+
+                <div class="list-loading" data-list-loading aria-hidden="true">
+                  <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <ul class="mail-list" data-list aria-label="Messages"></ul>
+                <div class="mail-empty" data-empty hidden>
+                  <p class="empty-title">No messages in this view.</p>
+                  <p>Try another bucket or clear the search.</p>
+                  <button class="btn btn-quiet btn-sm" type="button" data-clear-filters>Clear filters</button>
+                  <button class="btn btn-quiet btn-sm" type="button" data-retry hidden>Try again</button>
+                </div>
+              </div>
+
+              <div class="detail-pane" data-detail-pane>
+                <div class="detail-placeholder" data-detail-empty>
+                  <div class="placeholder-mark" aria-hidden="true">
+                    <svg viewBox="0 0 44 34" fill="none">
+                      <rect x="1" y="1" width="42" height="32" rx="5" stroke="currentColor" stroke-width="1.5" />
+                      <path d="m2 5 20 15L42 5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                    </svg>
+                  </div>
+                  <p class="placeholder-title">Pick a message.</p>
+                  <p>Its bucket, deadline, next action and reply draft will appear here.</p>
+                </div>
+
+                <article class="detail" data-detail-body hidden>
+                  <header class="detail-head">
+                    <div class="detail-topline">
+                      <span class="category-pill" data-detail-category>Important</span>
+                      <span class="confidence" data-detail-confidence>—</span>
+                      <button class="detail-close" type="button" data-detail-close aria-label="Close message">
+                        <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                          <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+                        </svg>
+                      </button>
+                    </div>
+                    <h3 class="detail-subject" data-detail-subject>—</h3>
+                    <div class="sender-row">
+                      <span class="avatar" data-detail-avatar aria-hidden="true">P</span>
+                      <div class="sender-meta">
+                        <strong data-detail-from>—</strong>
+                        <span data-detail-email>—</span>
+                      </div>
+                      <time class="received" data-detail-received>—</time>
+                    </div>
+                  </header>
+
+                  <div class="detail-scroll">
+                    <p class="mail-body" data-detail-text></p>
+
+                    <section class="analysis-card" aria-labelledby="why-heading">
+                      <div class="analysis-head">
+                        <h4 id="why-heading">Why this bucket</h4>
+                        <span class="analysis-tag" data-detail-category-label>—</span>
+                      </div>
+                      <p class="analysis-summary" data-detail-reason>—</p>
+                      <ul class="reason-list" data-detail-reasons></ul>
+                    </section>
+
+                    <div class="extract-grid">
+                      <section class="extract-card">
+                        <h4>Deadline</h4>
+                        <p class="deadline-value" data-detail-deadline>None found</p>
+                        <p class="extract-note" data-detail-deadline-note>No date cue in this message.</p>
+                      </section>
+                      <section class="extract-card">
+                        <h4>Next actions</h4>
+                        <ul class="action-list" data-detail-actions></ul>
+                      </section>
+                    </div>
+
+                    <section class="reply-card" data-reply-card aria-labelledby="reply-heading">
+                      <div class="reply-head">
+                        <h4 id="reply-heading">Suggested reply</h4>
+                        <span class="draft-badge">Draft · not sent</span>
+                      </div>
+                      <textarea data-reply rows="9" aria-label="Suggested reply draft" spellcheck="true"></textarea>
+                      <p class="reply-error" data-reply-error hidden>Write a reply before reviewing it.</p>
+                      <div class="reply-actions">
+                        <button class="btn btn-primary btn-sm" type="button" data-review>
+                          Review &amp; send
+                        </button>
+                        <button class="btn btn-quiet btn-sm" type="button" data-copy>Copy draft</button>
+                        <span class="reply-note">Approval is required for every send.</span>
+                      </div>
+                    </section>
+
+                    <div class="spam-card" data-spam-note hidden>
+                      <p class="spam-title">No reply is drafted for spam.</p>
+                      <p>
+                        MailMate keeps spam out of the reply queue. In a real inbox, this is where
+                        you would report or delete it.
+                      </p>
+                    </div>
+
+                    <p class="sent-note" data-sent-note hidden>
+                      <span class="sent-check" aria-hidden="true">✓</span>
+                      Approved and logged on this page. No email left the browser.
+                    </p>
+                  </div>
+                </article>
+              </div>
+            </div>
+            <div class="app-scrim" data-scrim hidden></div>
+          </div>
+
+          <div class="demo-foot">
+            <p>
+              This demo is deterministic and offline. Classification uses keyword and sender
+              signals; deadlines use date cues in the text. It is a working prototype, not a
+              production mail client.
+            </p>
+            <div class="demo-foot-actions">
+              <button class="text-link" type="button" data-open-upload>Upload your own JSON or CSV</button>
+              <a class="text-link" href="test-inbox.json" download>Download the test inbox</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section class="section how-section" id="how" aria-labelledby="how-title">
+        <div class="wrap">
+          <div class="section-head section-head--split">
+            <div>
+              <p class="eyebrow">The pipeline</p>
+              <h2 id="how-title">Five passes over<br />every message.</h2>
+            </div>
+            <div class="section-head-copy">
+              <p>
+                No black box and no mailbox takeover. Each stage does one job, keeps its output
+                visible, and hands the message to the next stage.
+              </p>
+            </div>
+          </div>
+
+          <div class="pipeline">
+            <div class="stage-tabs" role="tablist" aria-label="MailMate pipeline stages" data-stage-tabs>
+              <button
+                class="stage-tab is-active"
+                type="button"
+                role="tab"
+                id="stage-tab-1"
+                aria-selected="true"
+                aria-controls="stage-panel-1"
+                tabindex="0"
+                data-stage="1"
+              >
+                <span class="stage-number">01</span>
+                <span class="stage-name">Read</span>
+                <span class="stage-line">Sender, subject, body.</span>
+              </button>
+              <button
+                class="stage-tab"
+                type="button"
+                role="tab"
+                id="stage-tab-2"
+                aria-selected="false"
+                aria-controls="stage-panel-2"
+                tabindex="-1"
+                data-stage="2"
+              >
+                <span class="stage-number">02</span>
+                <span class="stage-name">Sort</span>
+                <span class="stage-line">One of five buckets.</span>
+              </button>
+              <button
+                class="stage-tab"
+                type="button"
+                role="tab"
+                id="stage-tab-3"
+                aria-selected="false"
+                aria-controls="stage-panel-3"
+                tabindex="-1"
+                data-stage="3"
+              >
+                <span class="stage-number">03</span>
+                <span class="stage-name">Extract</span>
+                <span class="stage-line">Deadline and next action.</span>
+              </button>
+              <button
+                class="stage-tab"
+                type="button"
+                role="tab"
+                id="stage-tab-4"
+                aria-selected="false"
+                aria-controls="stage-panel-4"
+                tabindex="-1"
+                data-stage="4"
+              >
+                <span class="stage-number">04</span>
+                <span class="stage-name">Draft</span>
+                <span class="stage-line">A reply in your voice.</span>
+              </button>
+              <button
+                class="stage-tab"
+                type="button"
+                role="tab"
+                id="stage-tab-5"
+                aria-selected="false"
+                aria-controls="stage-panel-5"
+                tabindex="-1"
+                data-stage="5"
+              >
+                <span class="stage-number">05</span>
+                <span class="stage-name">Approve</span>
+                <span class="stage-line">You hold the send key.</span>
+              </button>
+            </div>
+
+            <div class="stage-stage">
+              <section
+                class="stage-panel is-active"
+                id="stage-panel-1"
+                role="tabpanel"
+                aria-labelledby="stage-tab-1"
+                tabindex="0"
+                data-panel="1"
+              >
+                <div class="stage-panel-head">
+                  <span class="panel-kicker">Stage 01</span>
+                  <h3>Read the whole message.</h3>
+                  <p>
+                    MailMate normalises the sender, subject and body. It does not need access to
+                    your mailbox password, and it does not forward anything to a server.
+                  </p>
+                </div>
+                <div class="stage-mock mail-mock" aria-hidden="true">
+                  <div class="mock-toolbar">
+                    <span class="mock-dot"></span>
+                    <span class="mock-dot"></span>
+                    <span class="mock-dot"></span>
+                    <span class="mock-toolbar-label">finance-budget-01.eml</span>
+                  </div>
+                  <div class="mock-mail-head">
+                    <span class="avatar avatar-lg">P</span>
+                    <div>
+                      <strong>Priya Raman</strong>
+                      <span>priya.raman@northstar.example</span>
+                    </div>
+                    <span class="mock-time">07:42</span>
+                  </div>
+                  <p class="mock-subject">Budget forecast: numbers due Friday</p>
+                  <div class="mock-lines">
+                    <span style="width: 94%"></span>
+                    <span style="width: 88%"></span>
+                    <span style="width: 62%"></span>
+                  </div>
+                  <div class="mock-lines mock-lines--short">
+                    <span style="width: 76%"></span>
+                    <span style="width: 48%"></span>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="stage-panel"
+                id="stage-panel-2"
+                role="tabpanel"
+                aria-labelledby="stage-tab-2"
+                tabindex="0"
+                data-panel="2"
+                hidden
+              >
+                <div class="stage-panel-head">
+                  <span class="panel-kicker">Stage 02</span>
+                  <h3>Sort it into one bucket.</h3>
+                  <p>
+                    Keyword weights and sender domains produce a score. The winner gets the
+                    message; the score becomes a confidence number you can judge.
+                  </p>
+                </div>
+                <div class="stage-mock sort-mock" aria-hidden="true">
+                  <div class="sort-target">
+                    <span class="sort-label">Scored</span>
+                    <strong>Budget forecast</strong>
+                    <span class="sort-sub">invoice · budget · finance · manager</span>
+                  </div>
+                  <div class="bucket-row">
+                    <span class="bucket-chip cat-important"><i></i>Important <b>7</b></span>
+                    <span class="bucket-chip cat-academic"><i></i>Academic <b>4</b></span>
+                    <span class="bucket-chip cat-internship"><i></i>Internship <b>4</b></span>
+                    <span class="bucket-chip cat-personal"><i></i>Personal <b>4</b></span>
+                    <span class="bucket-chip cat-spam"><i></i>Spam <b>5</b></span>
+                  </div>
+                  <div class="sort-result">
+                    <span class="sort-result-label">Filed as</span>
+                    <span class="sort-result-value">Important</span>
+                    <span class="sort-result-confidence">92% confidence</span>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="stage-panel"
+                id="stage-panel-3"
+                role="tabpanel"
+                aria-labelledby="stage-tab-3"
+                tabindex="0"
+                data-panel="3"
+                hidden
+              >
+                <div class="stage-panel-head">
+                  <span class="panel-kicker">Stage 03</span>
+                  <h3>Pull out what happens next.</h3>
+                  <p>
+                    Dates near cues such as “by”, “before” and “due” become deadlines. Imperative
+                    sentences become actions. Both stay visible beside the message.
+                  </p>
+                </div>
+                <div class="stage-mock extract-mock" aria-hidden="true">
+                  <div class="extract-mock-source">
+                    <span class="mock-quote">“</span>
+                    The Q4 forecast needs your revised numbers by Friday 20 November at 5pm.
+                    Please upload the updated sheet to the finance drive before then.
+                  </div>
+                  <div class="extract-mock-out">
+                    <div class="extract-mock-row">
+                      <span class="extract-mock-label">Deadline</span>
+                      <span class="deadline-chip">Fri 20 Nov · 5:00 pm</span>
+                    </div>
+                    <div class="extract-mock-row">
+                      <span class="extract-mock-label">Action</span>
+                      <span class="action-chip">Upload the updated sheet</span>
+                    </div>
+                    <div class="extract-mock-row">
+                      <span class="extract-mock-label">Reminder</span>
+                      <span class="action-chip action-chip--soft">Thu 19 Nov · 5:00 pm</span>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="stage-panel"
+                id="stage-panel-4"
+                role="tabpanel"
+                aria-labelledby="stage-tab-4"
+                tabindex="0"
+                data-panel="4"
+                hidden
+              >
+                <div class="stage-panel-head">
+                  <span class="panel-kicker">Stage 04</span>
+                  <h3>Write the reply, keep the pen.</h3>
+                  <p>
+                    The draft uses the sender’s name, the action and the deadline. It is plain
+                    text, fully editable, and attached to the message until you decide otherwise.
+                  </p>
+                </div>
+                <div class="stage-mock reply-mock" aria-hidden="true">
+                  <div class="mock-reply-head">
+                    <span>Re: Budget forecast: numbers due Friday</span>
+                    <span class="draft-badge">Draft</span>
+                  </div>
+                  <div class="mock-reply-body">
+                    <p>Hi Priya,</p>
+                    <p>
+                      Thanks for the details. I’ll upload the updated sheet to the finance drive
+                      by Fri 20 Nov, 5:00 pm.
+                    </p>
+                    <p>I’ll confirm once it’s done.</p>
+                    <p>Best,<br />Alex</p>
+                  </div>
+                  <div class="mock-reply-foot">
+                    <span>Editable plain text</span>
+                    <span>Not sent</span>
+                  </div>
+                </div>
+              </section>
+
+              <section
+                class="stage-panel"
+                id="stage-panel-5"
+                role="tabpanel"
+                aria-labelledby="stage-tab-5"
+                tabindex="0"
+                data-panel="5"
+                hidden
+              >
+                <div class="stage-panel-head">
+                  <span class="panel-kicker">Stage 05</span>
+                  <h3>Wait for a person.</h3>
+                  <p>
+                    Every reply stops at an approval card. You check the recipient, read the draft
+                    once more, and approve. The demo logs the send locally and nothing else.
+                  </p>
+                </div>
+                <div class="stage-mock approve-mock" aria-hidden="true">
+                  <div class="approve-mock-head">
+                    <span class="approve-mock-title">Send approval</span>
+                    <span class="approve-mock-id">MM-2481</span>
+                  </div>
+                  <div class="approve-mock-row">
+                    <span>To</span>
+                    <strong>Priya Raman · priya.raman@northstar.example</strong>
+                  </div>
+                  <div class="approve-mock-row">
+                    <span>Subject</span>
+                    <strong>Re: Budget forecast: numbers due Friday</strong>
+                  </div>
+                  <div class="approve-mock-check">
+                    <span class="fake-check">✓</span>
+                    <span>I checked the recipient and the draft.</span>
+                  </div>
+                  <span class="fake-send">Approve &amp; simulate send</span>
+                  <span class="approve-mock-stamp">Approved by you</span>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Approval -->
+      <section class="section approval-section" id="approval" aria-labelledby="approval-title">
+        <div class="wrap approval-grid">
+          <div class="approval-copy">
+            <p class="eyebrow">The approval gate</p>
+            <h2 id="approval-title">Nothing sends<br />without a person.</h2>
+            <p class="lede">
+              Sorting can be automatic. Sending cannot. MailMate keeps a human between the draft
+              and the outbox, by design.
+            </p>
+            <ul class="rule-list">
+              <li>
+                <span class="rule-number">01</span>
+                <div>
+                  <strong>One message, one approval.</strong>
+                  <p>There is no “send all” switch and no auto-send setting to find.</p>
+                </div>
+              </li>
+              <li>
+                <span class="rule-number">02</span>
+                <div>
+                  <strong>The draft stays editable.</strong>
+                  <p>Change the wording in the demo before you approve. The last edit is what sends.</p>
+                </div>
+              </li>
+              <li>
+                <span class="rule-number">03</span>
+                <div>
+                  <strong>The send is simulated and logged.</strong>
+                  <p>This prototype has no mail server. The approval is recorded on the page only.</p>
+                </div>
+              </li>
+            </ul>
+            <a class="btn btn-primary" href="#demo">Walk through an approval <span aria-hidden="true">→</span></a>
+          </div>
+
+          <div class="approval-visual">
+            <div class="approval-slip">
+              <div class="slip-top">
+                <span class="slip-title">Send approval</span>
+                <span class="slip-id">MM-2481</span>
+              </div>
+              <dl class="slip-meta">
+                <div><dt>To</dt><dd>Priya Raman</dd></div>
+                <div><dt>Address</dt><dd>priya.raman@northstar.example</dd></div>
+                <div><dt>Subject</dt><dd>Re: Budget forecast: numbers due Friday</dd></div>
+              </dl>
+              <div class="slip-draft">
+                <p>Hi Priya,</p>
+                <p>Thanks for the details. I’ll upload the updated sheet by Fri 20 Nov, 5:00 pm.</p>
+                <p>I’ll confirm once it’s done.</p>
+                <p>Best,<br />Alex</p>
+              </div>
+              <div class="slip-rule"></div>
+              <div class="slip-check">
+                <span class="slip-check-box" aria-hidden="true">✓</span>
+                <span>Recipient and draft checked by you</span>
+              </div>
+              <div class="slip-foot">
+                <span class="slip-sim">Simulated send</span>
+                <span class="slip-time">15 Nov · 09:12</span>
+              </div>
+              <span class="approval-stamp" aria-hidden="true">Approved</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data -->
+      <section class="section data-section" id="data" aria-labelledby="data-title">
+        <div class="wrap">
+          <div class="section-head section-head--split">
+            <div>
+              <p class="eyebrow">Your data</p>
+              <h2 id="data-title">Bring a file.<br />Keep it local.</h2>
+            </div>
+            <div class="section-head-copy">
+              <p>
+                Drop in a small JSON or CSV export. MailMate parses it in the browser, sorts it,
+                and replaces the demo inbox. No upload, no account, no server.
+              </p>
+            </div>
+          </div>
+
+          <div class="data-grid">
+            <div class="upload-card">
+              <div
+                class="dropzone"
+                data-dropzone
+                role="button"
+                tabindex="0"
+                aria-label="Upload a JSON or CSV file"
+                aria-describedby="drop-hint"
+              >
+                <span class="drop-icon" aria-hidden="true">
+                  <svg viewBox="0 0 48 48" fill="none">
+                    <rect x="7" y="12" width="34" height="26" rx="4" stroke="currentColor" stroke-width="1.7" />
+                    <path d="m8 15 16 12 16-12" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+                    <path d="M24 6v16m0-16-6 6m6-6 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <p class="drop-title">Drop a JSON or CSV file</p>
+                <p class="drop-sub">or <span class="drop-link">choose a file</span></p>
+                <p class="drop-hint" id="drop-hint">Up to 2 MB · up to 300 messages · stays on this device</p>
+              </div>
+              <input
+                type="file"
+                accept=".json,.csv,application/json,text/csv"
+                hidden
+                aria-label="Upload a JSON or CSV file"
+                data-upload-input
+              />
+              <div class="upload-actions">
+                <a class="text-link" href="sample-inbox.csv" download>Sample CSV</a>
+                <a class="text-link" href="test-inbox.json" download>Test inbox JSON</a>
+                <button class="text-link" type="button" data-load-test>Restore test inbox</button>
+              </div>
+              <div class="upload-result" data-upload-result hidden aria-live="polite"></div>
+            </div>
+
+            <div class="schema-card">
+              <div class="schema-head">
+                <h3>One row per message.</h3>
+                <span class="schema-tag">JSON or CSV</span>
+              </div>
+              <p>
+                Use these fields. Extra columns are ignored; a missing sender, subject or body
+                skips that row and reports it back.
+              </p>
+              <dl class="schema-list">
+                <div><dt>from</dt><dd>Object with name and email, or “Name &lt;email&gt;”</dd><span class="field-flag">required</span></div>
+                <div><dt>fromName / fromEmail</dt><dd>Separate columns for CSV exports</dd><span class="field-flag field-flag--alt">optional</span></div>
+                <div><dt>subject</dt><dd>Plain text subject line</dd><span class="field-flag">required</span></div>
+                <div><dt>body</dt><dd>Plain text, HTML, or CSV-quoted paragraphs</dd><span class="field-flag">required</span></div>
+                <div><dt>receivedAt</dt><dd>ISO date, used for ordering the list</dd><span class="field-flag field-flag--alt">optional</span></div>
+                <div><dt>id</dt><dd>Stable identifier for the message</dd><span class="field-flag field-flag--alt">optional</span></div>
+              </dl>
+              <div class="schema-foot">
+                <span class="privacy-chip">
+                  <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                    <rect x="4.5" y="8.5" width="11" height="8" rx="2" stroke="currentColor" stroke-width="1.5" />
+                    <path d="M7 8.5V6.6a3 3 0 0 1 6 0v1.9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                  </svg>
+                  Parsed with the File API. No network request.
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="section faq-section" id="faq" aria-labelledby="faq-title">
+        <div class="wrap faq-grid">
+          <div class="faq-head">
+            <p class="eyebrow">Before you start</p>
+            <h2 id="faq-title">Fair questions.</h2>
+            <p class="lede">
+              The demo is deliberately small. Here is exactly what it does and does not do.
+            </p>
+          </div>
+          <div class="faq-list">
+            <details class="faq-item" open>
+              <summary>
+                <span>Does MailMate connect to my real inbox?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  Not in this build. The demo uses a bundled 24-message inbox or a file you choose.
+                  There is no OAuth flow, no mailbox password field, and no server receiving your
+                  messages.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
+                <span>What are the five buckets?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  Important, Academic, Internship, Personal and Spam. The order matters: Important
+                  is the default for messages with weak signals so a person can check them, while
+                  Spam needs a clear combination of giveaway phrases.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
+                <span>How are deadlines and actions found?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  Dates are scored by nearby cues such as “by”, “before” and “due”, then the
+                  strongest candidate wins. Actions come from imperative sentences and requests
+                  such as “please upload” or “can you confirm”. Both are heuristics, visible for
+                  you to correct.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
+                <span>Can it send email on its own?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  No. Every reply goes through an approval card with a required checkbox. The
+                  demo then simulates the send and records it on the page. No message leaves the
+                  browser, and there is no auto-send option.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
+                <span>What happens when I upload a file?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  The file is read with the browser’s File API, validated row by row, then passed
+                  through the same sorting and drafting logic. Rows missing a sender, subject or
+                  body are listed as errors instead of being guessed at.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
+                <span>Is the three-dimensional scene real?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  Yes. The sorting table is a live Three.js scene with envelopes moving into five
+                  paper trays. It pauses when you ask it to, when the tab is hidden, and when the
+                  scene is off screen. If WebGL is unavailable, a still paper fallback appears.
+                </p>
+              </div>
+            </details>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer" aria-labelledby="footer-title">
+      <div class="wrap">
+        <div class="footer-cta">
+          <div>
+            <p class="eyebrow eyebrow--light">Ready when you are</p>
+            <h2 id="footer-title">Open the demo with<br />24 messages.</h2>
+          </div>
+          <div class="footer-cta-side">
+            <p>
+              Close it with a clear desk, 19 drafted replies, and nothing sent until you say so.
+            </p>
+            <div class="footer-actions">
+              <a class="btn btn-primary" href="#demo">Open the live inbox <span aria-hidden="true">→</span></a>
+              <button class="btn btn-ghost btn-ghost--light" type="button" data-open-upload>Upload a file</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-grid">
+          <div class="footer-brand">
+            <a class="brand brand--footer" href="#top" aria-label="MailMate, back to top">
+              <span class="brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 32 26" fill="none">
+                  <rect x="1" y="1" width="30" height="24" rx="5" fill="currentColor" />
+                  <path d="M4 6.5 16 16 28 6.5" stroke="#fbf7ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  <path d="m4 20 8.5-7M28 20l-8.5-7" stroke="#fbf7ee" stroke-width="1.6" stroke-linecap="round" opacity=".55" />
+                </svg>
+              </span>
+              <span class="brand-name">MailMate</span>
+            </a>
+            <p>A browser-only email triage demo. Built with Three.js, plain JavaScript and a fixed test inbox.</p>
+          </div>
+          <nav class="footer-col" aria-label="Demo links">
+            <p class="footer-heading">Demo</p>
+            <a href="#demo">Live inbox</a>
+            <a href="#how">How it works</a>
+            <a href="#approval">Approval flow</a>
+          </nav>
+          <nav class="footer-col" aria-label="Data links">
+            <p class="footer-heading">Data</p>
+            <button class="footer-link" type="button" data-open-upload>Upload a file</button>
+            <a href="test-inbox.json" download>Test inbox JSON</a>
+            <a href="sample-inbox.csv" download>Sample CSV</a>
+          </nav>
+          <nav class="footer-col" aria-label="About links">
+            <p class="footer-heading">About</p>
+            <a href="#faq">FAQ</a>
+            <a href="#top">Back to top</a>
+            <span class="footer-static">Private beta</span>
+          </nav>
+        </div>
+
+        <div class="footer-base">
+          <p>© 2026 MailMate. A portfolio demo, not a mail service.</p>
+          <p>No mailbox connected · no email sent · no data uploaded</p>
+        </div>
+      </div>
+    </footer>
+
+    <div class="toast-region" aria-live="polite" aria-atomic="true">
+      <div class="toast" data-toast></div>
+    </div>
+
+    <dialog class="modal approval-modal" id="approval-dialog" aria-labelledby="approval-dialog-title">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Final check</p>
+            <h2 id="approval-dialog-title">Approve this send</h2>
+          </div>
+          <button class="modal-close" type="button" data-approval-close aria-label="Close approval dialog">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <dl class="approval-meta">
+          <div><dt>To</dt><dd data-approval-to>—</dd></div>
+          <div><dt>Subject</dt><dd data-approval-subject>—</dd></div>
+        </dl>
+        <label class="field-label" for="approval-draft">Your reply</label>
+        <textarea id="approval-draft" class="approval-draft" data-approval-draft rows="9"></textarea>
+        <label class="consent">
+          <input type="checkbox" data-approve-check />
+          <span class="consent-box" aria-hidden="true"></span>
+          <span>I checked the recipient and read the draft. I understand the send is simulated.</span>
+        </label>
+        <div class="modal-actions">
+          <button class="btn btn-quiet" type="button" data-approval-cancel>Keep editing</button>
+          <button class="btn btn-primary" type="button" data-approval-confirm disabled>
+            Approve &amp; simulate send
+          </button>
+        </div>
+        <p class="modal-note">No network request is made. The draft is marked as sent on this page only.</p>
+      </div>
+    </dialog>
+
+    <dialog class="modal reminders-modal" id="reminders-dialog" aria-labelledby="reminders-dialog-title">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Follow-ups</p>
+            <h2 id="reminders-dialog-title">Reminders</h2>
+          </div>
+          <button class="modal-close" type="button" data-reminders-close aria-label="Close reminders">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <p class="modal-intro">
+          Generated from deadlines and actions in the current inbox. Mark one done, or open the
+          message behind it.
+        </p>
+        <ul class="reminder-list" data-reminder-list></ul>
+        <p class="reminder-empty" data-reminder-empty hidden>
+          No open reminders. Every deadline in this inbox has been handled.
+        </p>
+      </div>
+    </dialog>
+
+    <noscript>
+      <div class="noscript">
+        <p>MailMate needs JavaScript for the live inbox and the Three.js scene. The copy and FAQ still read fine.</p>
+      </div>
+    </noscript>
+  </body>
+</html>
