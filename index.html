@@ -40,6 +40,7 @@
         <nav class="site-nav" id="site-nav" aria-label="Main navigation">
           <a href="#demo">Live inbox</a>
           <a href="#how">How it works</a>
+          <a href="#ai">AI model</a>
           <a href="#approval">Approval</a>
           <a href="#data">Your data</a>
           <a href="#faq">FAQ</a>
@@ -71,7 +72,7 @@
           <div class="hero-copy">
             <p class="eyebrow hero-eyebrow">
               <span class="live-dot" aria-hidden="true"></span>
-              Email triage agent · private beta
+              Email triage agent · on-device AI
             </p>
             <h1 id="hero-title">
               Your inbox,<br />
@@ -79,8 +80,8 @@
             </h1>
             <p class="lede">
               MailMate reads each message, files it into one of five buckets, pulls out the
-              deadline and next action, and writes a reply. You edit it, approve it, and decide
-              what sends.
+              deadline and next action, and writes a reply. A small local model scores priority,
+              tone and related mail. You edit it, approve it, and decide what sends.
             </p>
             <div class="hero-actions">
               <a class="btn btn-primary" href="#demo">
@@ -164,6 +165,10 @@
               </div>
               <p class="app-status" data-statusline>Loading the test inbox…</p>
               <div class="app-actions">
+                <button class="app-action app-action--ai" type="button" data-brief-toggle>
+                  <span class="ai-glyph" aria-hidden="true">✦</span>
+                  AI brief
+                </button>
                 <button class="app-action" type="button" data-activity-toggle>
                   Activity
                   <span class="app-count app-count--quiet" data-activity-total>0</span>
@@ -214,6 +219,7 @@
                   <dl class="summary-list">
                     <div><dt>Unread</dt><dd data-stat-unread>—</dd></div>
                     <div><dt>Due soon</dt><dd data-stat-due>—</dd></div>
+                    <div><dt>AI focus</dt><dd data-stat-focus>—</dd></div>
                     <div><dt>Drafts</dt><dd data-stat-drafts>—</dd></div>
                     <div><dt>Replied</dt><dd data-stat-replied>—</dd></div>
                   </dl>
@@ -236,7 +242,29 @@
                     />
                     <kbd class="search-kbd" aria-hidden="true">/</kbd>
                   </label>
-                  <p class="result-count" data-result-count aria-live="polite">Loading…</p>
+                  <div class="mail-tools-foot">
+                    <p class="result-count" data-result-count aria-live="polite">Loading…</p>
+                    <div class="mail-tools-controls">
+                      <button
+                        class="mini-toggle"
+                        type="button"
+                        data-semantic-toggle
+                        aria-pressed="false"
+                        title="Rank results by TF-IDF meaning instead of exact words"
+                      >
+                        Semantic
+                      </button>
+                      <button
+                        class="mini-toggle"
+                        type="button"
+                        data-sort-toggle
+                        aria-pressed="false"
+                        title="Toggle AI priority sorting"
+                      >
+                        Newest first
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="list-loading" data-list-loading aria-hidden="true">
@@ -288,6 +316,33 @@
                   <div class="detail-scroll">
                     <p class="mail-body" data-detail-text></p>
 
+                    <section class="ai-card" aria-labelledby="ai-read-heading">
+                      <div class="ai-card-head">
+                        <div class="ai-card-title">
+                          <span class="ai-glyph" aria-hidden="true">✦</span>
+                          <h4 id="ai-read-heading">AI read</h4>
+                        </div>
+                        <span class="ai-badge">on-device</span>
+                      </div>
+                      <p class="ai-summary" data-ai-summary>—</p>
+                      <div class="ai-chip-row">
+                        <span class="ai-chip" data-ai-tone>—</span>
+                        <span class="ai-chip" data-ai-urgency>—</span>
+                        <span class="ai-chip" data-ai-model>—</span>
+                      </div>
+                      <div class="priority-block">
+                        <div class="priority-head">
+                          <span class="priority-label">Priority</span>
+                          <strong class="priority-score" data-ai-priority>—</strong>
+                          <span class="priority-band" data-ai-priority-band>—</span>
+                        </div>
+                        <div class="priority-track" aria-hidden="true">
+                          <span class="priority-fill" data-ai-priority-fill></span>
+                        </div>
+                        <ul class="priority-factors" data-ai-priority-factors></ul>
+                      </div>
+                    </section>
+
                     <section class="analysis-card" aria-labelledby="why-heading">
                       <div class="analysis-head">
                         <h4 id="why-heading">Why this bucket</h4>
@@ -305,6 +360,14 @@
                       </div>
                       <p class="analysis-summary" data-detail-reason>—</p>
                       <ul class="reason-list" data-detail-reasons></ul>
+                      <div class="model-view">
+                        <div class="model-view-head">
+                          <span class="model-view-title">Naive Bayes view</span>
+                          <span class="model-agreement" data-model-agreement>—</span>
+                        </div>
+                        <div class="model-bars" data-model-bars></div>
+                        <p class="model-terms" data-model-terms>—</p>
+                      </div>
                     </section>
 
                     <div class="extract-grid">
@@ -329,10 +392,27 @@
                       </section>
                     </div>
 
+                    <section class="similar-card" data-similar-card hidden aria-labelledby="similar-heading">
+                      <h4 id="similar-heading">Related mail</h4>
+                      <div class="similar-list" data-similar-list></div>
+                    </section>
+
                     <section class="reply-card" data-reply-card aria-labelledby="reply-heading">
                       <div class="reply-head">
                         <h4 id="reply-heading">Suggested reply</h4>
                         <span class="draft-badge">Draft · not sent</span>
+                      </div>
+                      <div class="tone-row" aria-label="AI reply tone">
+                        <span class="tone-label">AI tone</span>
+                        <button class="tone-btn is-active" type="button" data-tone="warm" aria-pressed="true">
+                          Warm
+                        </button>
+                        <button class="tone-btn" type="button" data-tone="concise" aria-pressed="false">
+                          Concise
+                        </button>
+                        <button class="tone-btn" type="button" data-tone="formal" aria-pressed="false">
+                          Formal
+                        </button>
                       </div>
                       <textarea data-reply rows="9" aria-label="Suggested reply draft" spellcheck="true"></textarea>
                       <p class="reply-error" data-reply-error hidden>Write a reply before reviewing it.</p>
@@ -366,9 +446,10 @@
 
           <div class="demo-foot">
             <p>
-              This demo is deterministic and offline. Classification uses keyword and sender
-              signals; deadlines use date cues in the text. Your session — bucket changes, drafts,
-              reminders and the activity log — stays in this browser, and no email is ever sent.
+              This demo is deterministic and offline. A small Naive Bayes model, TF-IDF search,
+              sentiment scoring and extractive summaries run beside the keyword rules. Your
+              session — bucket changes, drafts, reminders and the activity log — stays in this
+              browser, and no email is ever sent.
             </p>
             <div class="demo-foot-actions">
               <button class="text-link" type="button" data-open-upload>Upload your own JSON or CSV</button>
@@ -672,6 +753,110 @@
         </div>
       </section>
 
+      <!-- AI model -->
+      <section class="section ai-section" id="ai" aria-labelledby="ai-title">
+        <div class="wrap">
+          <div class="section-head section-head--split">
+            <div>
+              <p class="eyebrow">AI on your device</p>
+              <h2 id="ai-title">A small model,<br />not a black box.</h2>
+            </div>
+            <div class="section-head-copy">
+              <p>
+                MailMate trains a multinomial Naive Bayes classifier in the browser from 75
+                labelled examples. It is one signal, not the boss: the keyword rules stay visible
+                beside it, and every prediction shows its probabilities and top terms.
+              </p>
+              <p class="micro-note">No API key · no cloud call · deterministic at load time</p>
+            </div>
+          </div>
+
+          <div class="ai-grid">
+            <div class="model-card">
+              <div class="model-card-head">
+                <div>
+                  <p class="model-kicker">Model card</p>
+                  <h3>MailMate classifier v1</h3>
+                </div>
+                <span class="ai-badge">local · deterministic</span>
+              </div>
+              <dl class="model-stats">
+                <div><dt>Accuracy</dt><dd data-model-accuracy>—</dd></div>
+                <div><dt>Macro F1</dt><dd data-model-f1>—</dd></div>
+                <div><dt>Training rows</dt><dd data-model-samples>—</dd></div>
+                <div><dt>Vocabulary</dt><dd data-model-vocab>—</dd></div>
+              </dl>
+              <div class="model-class-list" data-model-classes></div>
+              <div class="model-playground">
+                <label class="field-label" for="model-input">Try the classifier</label>
+                <textarea id="model-input" data-model-input rows="3">The recruiter from the talent team would like to schedule an interview for the internship.</textarea>
+                <div class="model-playground-foot">
+                  <button class="btn btn-quiet btn-sm" type="button" data-model-run>Classify text</button>
+                  <span class="micro-note">Runs locally · no request</span>
+                </div>
+                <div class="model-bars model-bars--playground" data-model-playground-bars></div>
+                <p class="model-playground-result" data-model-playground-result>—</p>
+              </div>
+              <p class="model-foot">
+                5-fold cross-validation on the bundled training set. Metrics are computed in the
+                browser when the page loads, not copied from a slide.
+              </p>
+            </div>
+
+            <div class="ai-feature-grid">
+              <article class="ai-feature">
+                <span class="ai-feature-index">01</span>
+                <h3>Probability view</h3>
+                <p>
+                  Every bucket gets a score from the classifier. The winning bucket and the
+                  runner-up are both visible, so you can see when the model is unsure.
+                </p>
+              </article>
+              <article class="ai-feature">
+                <span class="ai-feature-index">02</span>
+                <h3>Priority score</h3>
+                <p>
+                  Deadline proximity, next actions, tone, bucket and unread state become one
+                  0–100 score. The factors behind it are listed, not hidden.
+                </p>
+              </article>
+              <article class="ai-feature">
+                <span class="ai-feature-index">03</span>
+                <h3>Tone &amp; urgency</h3>
+                <p>
+                  A small lexicon reads the emotional temperature of each message and flags
+                  urgent language before it reaches the reply draft.
+                </p>
+              </article>
+              <article class="ai-feature">
+                <span class="ai-feature-index">04</span>
+                <h3>Extractive summary</h3>
+                <p>
+                  The two most useful sentences are selected by keyword frequency, position and
+                  action cues. The original message stays one click away.
+                </p>
+              </article>
+              <article class="ai-feature">
+                <span class="ai-feature-index">05</span>
+                <h3>Semantic search</h3>
+                <p>
+                  TF-IDF vectors rank results by meaning instead of exact substring matches.
+                  Related mail is suggested from the same index.
+                </p>
+              </article>
+              <article class="ai-feature">
+                <span class="ai-feature-index">06</span>
+                <h3>Brief &amp; tone-aware drafts</h3>
+                <p>
+                  The daily brief ranks what needs you first. Drafts can be rewritten as warm,
+                  concise or formal without leaving the page.
+                </p>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Approval -->
       <section class="section approval-section" id="approval" aria-labelledby="approval-title">
         <div class="wrap approval-grid">
@@ -849,6 +1034,35 @@
             </details>
             <details class="faq-item">
               <summary>
+                <span>What does the AI actually do?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  A multinomial Naive Bayes classifier, trained in the browser from 75 labelled
+                  examples, scores each message against the five buckets. Around it, TF-IDF
+                  semantic search, a sentiment and urgency lexicon, extractive summaries, a
+                  priority score and tone-aware draft rewrites all run locally. The rule engine
+                  and the model are shown side by side so you can judge both.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
+                <span>Does the AI call a cloud API?</span>
+                <span class="faq-icon" aria-hidden="true"></span>
+              </summary>
+              <div class="faq-answer">
+                <p>
+                  No. There is no API key, no model download and no network request. The training
+                  set is bundled with the page, the model is fitted on load, and the
+                  cross-validation metrics are computed in the same tab. That keeps the demo
+                  deterministic and keeps your inbox on your device.
+                </p>
+              </div>
+            </details>
+            <details class="faq-item">
+              <summary>
                 <span>What are the five buckets?</span>
                 <span class="faq-icon" aria-hidden="true"></span>
               </summary>
@@ -948,12 +1162,13 @@
               </span>
               <span class="brand-name">MailMate</span>
             </a>
-            <p>A browser-only email triage demo. Built with Three.js, plain JavaScript and a fixed test inbox.</p>
+            <p>A browser-only email triage demo. Built with Three.js, plain JavaScript and a small on-device classifier.</p>
           </div>
           <nav class="footer-col" aria-label="Demo links">
             <p class="footer-heading">Demo</p>
             <a href="#demo">Live inbox</a>
             <a href="#how">How it works</a>
+            <a href="#ai">AI model</a>
             <a href="#approval">Approval flow</a>
           </nav>
           <nav class="footer-col" aria-label="Data links">
@@ -980,6 +1195,36 @@
     <div class="toast-region" aria-live="polite" aria-atomic="true">
       <div class="toast" data-toast></div>
     </div>
+
+    <dialog class="modal brief-modal" id="brief-dialog" aria-labelledby="brief-dialog-title">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">AI daily brief</p>
+            <h2 id="brief-dialog-title">Your inbox, in a minute.</h2>
+          </div>
+          <button class="modal-close" type="button" data-brief-close aria-label="Close AI brief">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <div class="brief-stats" data-brief-stats></div>
+        <p class="brief-lede" data-brief-lede>—</p>
+        <div class="brief-section">
+          <div class="brief-section-head">
+            <h3>Needs you first</h3>
+            <span class="ai-badge">ranked by AI priority</span>
+          </div>
+          <ol class="brief-list" data-brief-list></ol>
+        </div>
+        <div class="brief-section">
+          <h3>Suggested plan</h3>
+          <ul class="brief-plan" data-brief-plan></ul>
+        </div>
+        <p class="modal-note">Generated on this device from the current inbox. No network request.</p>
+      </div>
+    </dialog>
 
     <dialog class="modal approval-modal" id="approval-dialog" aria-labelledby="approval-dialog-title">
       <div class="modal-inner">

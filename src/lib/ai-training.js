@@ -1,0 +1,93 @@
+/**
+ * Labelled examples for the on-device classifier.
+ *
+ * These are intentionally short and varied. The model learns term frequencies
+ * from them at runtime, and the UI reports 5-fold cross-validation results so
+ * the numbers are not invented.
+ */
+export const TRAINING_SAMPLES = [
+  // Important / operations
+  { category: "important", text: "The quarterly budget forecast is due Friday. Please upload the revised figures to the finance drive before then." },
+  { category: "important", text: "The supplier contract is ready for signature. Review the redlines and sign before the deadline." },
+  { category: "important", text: "Invoice 1042 is overdue. Pay the balance by 20 November and send the payment reference." },
+  { category: "important", text: "Collect your new building pass from reception before Monday. Bring photo ID for access to level 4." },
+  { category: "important", text: "IT maintenance window tonight at 10pm. Save your work and log out before the server goes offline." },
+  { category: "important", text: "Your visa document check is on Tuesday. Bring your passport and BRP to the international office." },
+  { category: "important", text: "Team offsite agenda: choose one workshop by Wednesday at noon so we can confirm the headcount." },
+  { category: "important", text: "The board pack goes out on Monday. Confirm the final headcount and check the cost lines." },
+  { category: "important", text: "Legal ops needs a signature on the supplier agreement before the current terms expire." },
+  { category: "important", text: "Facilities will change access to level 4 from Monday. Reply if you are working remotely." },
+  { category: "important", text: "The manager needs the payment reference for invoice 1042. Send it once the transfer clears." },
+  { category: "important", text: "Action required: renew your building access card before the end of the month." },
+  { category: "important", text: "Appointment at the bank on Friday at 2pm. Bring the signed contract and your passport." },
+  { category: "important", text: "The contract renewal is overdue and needs approval from the finance team." },
+  { category: "important", text: "Payroll deadline is tomorrow at noon. Submit the approved timesheet before the cutoff." },
+
+  // Academic
+  { category: "academic", text: "CS341 assignment 2 is due Monday. Submit the literature review through the course portal." },
+  { category: "academic", text: "The seminar reading is on the course page. Prepare two questions for the tutorial." },
+  { category: "academic", text: "The exam timetable is published. Check your seat number and student number before the exam." },
+  { category: "academic", text: "Group project meeting with the professor after the lecture. Bring the draft slides." },
+  { category: "academic", text: "The university library has extended opening hours during the exam period." },
+  { category: "academic", text: "Your thesis draft needs a stronger literature review and a clearer methodology section." },
+  { category: "academic", text: "Module registration closes Friday. Choose your seminars and tutorial groups." },
+  { category: "academic", text: "The rubric for the coursework is attached. Submit the assignment before the deadline." },
+  { category: "academic", text: "The lecture is cancelled. Watch the recording before the tutorial on Thursday." },
+  { category: "academic", text: "Campus study space booking opens Monday. Reserve a desk for the exam revision week." },
+  { category: "academic", text: "Assignment feedback is available in the portal. Read the comments before the next submission." },
+  { category: "academic", text: "The exam will cover weeks 1 to 6 of the module, including the lecture on research methods." },
+  { category: "academic", text: "Please submit your group project slides by 5pm on Friday through the course portal." },
+  { category: "academic", text: "The course reader chapter is on the reading list. Read it before the seminar." },
+  { category: "academic", text: "Your dissertation supervisor is available on Thursday to discuss the literature review." },
+
+  // Internship / early career
+  { category: "internship", text: "We would like to invite you to an interview for the software engineering internship." },
+  { category: "internship", text: "Your offer letter is attached. Confirm your availability for the internship start date by Friday." },
+  { category: "internship", text: "The recruiter from the talent team will call you about the graduate scheme application." },
+  { category: "internship", text: "Please send your portfolio link and your availability for an interview next week." },
+  { category: "internship", text: "Application update: we are reviewing your CV for the data science internship role." },
+  { category: "internship", text: "Interview panel details for the data science internship are attached. The hiring manager will meet you on Tuesday." },
+  { category: "internship", text: "The hiring manager would like to meet you on Tuesday for a second interview." },
+  { category: "internship", text: "Congratulations, you have been selected for the internship programme. The talent team will send onboarding details." },
+  { category: "internship", text: "Complete the application form and attach your portfolio for the marketing intern position." },
+  { category: "internship", text: "The graduate scheme assessment centre is on 3 December. Confirm your attendance with the recruiter." },
+  { category: "internship", text: "We received your application for the marketing intern position and will update you soon." },
+  { category: "internship", text: "The talent team needs your availability for a second interview with the hiring manager." },
+  { category: "internship", text: "Your internship start date and onboarding details are attached. Please confirm you received them." },
+  { category: "internship", text: "Recruiter follow-up: are you still interested in the role? Let us know your availability." },
+  { category: "internship", text: "The people ops team will send your offer letter today. Reply with any questions about the internship." },
+
+  // Personal
+  { category: "personal", text: "Dinner at ours on Saturday? Let me know if you are free and I will book a table." },
+  { category: "personal", text: "Happy birthday! Hope you have a lovely day with your family." },
+  { category: "personal", text: "Flat viewing on Thursday at 6pm. Can you make it? The landlord will be there." },
+  { category: "personal", text: "Hike this weekend? The weather looks good and the trail is not too busy." },
+  { category: "personal", text: "I shared the photos from the trip in the album. Let me know which ones you like." },
+  { category: "personal", text: "Mum and dad are visiting next week. Are you around for dinner?" },
+  { category: "personal", text: "Catch up over coffee soon? It has been ages since we talked." },
+  { category: "personal", text: "Are you free for dinner on Friday? My treat." },
+  { category: "personal", text: "Thanks for the birthday wishes. Talk soon and enjoy the rest of the weekend." },
+  { category: "personal", text: "The family barbecue is on Sunday afternoon. Bring something to share if you can." },
+  { category: "personal", text: "Let me know when you land and I will pick you up from the airport." },
+  { category: "personal", text: "We booked a table for four at the restaurant on Saturday. See you there." },
+  { category: "personal", text: "Photos from the wedding are in the shared album. Have a look when you have time." },
+  { category: "personal", text: "Want to join us for a walk on the weekend? We can grab coffee afterwards." },
+  { category: "personal", text: "I will call you tonight after work. Hope you had a good day." },
+
+  // Spam
+  { category: "spam", text: "You have won a 850 gift card. Verify your details within 24 hours and click here to claim." },
+  { category: "spam", text: "Exclusive crypto opportunity: 10x returns guaranteed. Act now before the allocation closes." },
+  { category: "spam", text: "Your parcel is held at the depot. Pay the redelivery fee and verify payment immediately." },
+  { category: "spam", text: "Wire transfer required. Invoice attached. Confidential. Click here to pay." },
+  { category: "spam", text: "Limited time webinar: grow your audience and 10x your income. Unsubscribe anytime." },
+  { category: "spam", text: "Congratulations, you have been selected for a prize. Click here to claim your reward." },
+  { category: "spam", text: "Risk-free investment. Bitcoin lottery winners. Act now and unlock guaranteed returns." },
+  { category: "spam", text: "Verify your account to claim your reward. This exclusive offer is available for a limited time." },
+  { category: "spam", text: "You are a winner! Claim your gift card now. No purchase necessary." },
+  { category: "spam", text: "Final notice: wire transfer overdue. Click here to pay and avoid the redelivery fee." },
+  { category: "spam", text: "Exclusive offer for selected members. Limited time only. Verify payment today." },
+  { category: "spam", text: "Crypto giveaway: guaranteed returns with no risk. Act now and click here." },
+  { category: "spam", text: "Your parcel is held. Pay the fee immediately or it will be returned to sender." },
+  { category: "spam", text: "Grow your audience with this guaranteed webinar. Unsubscribe if you do not want updates." },
+  { category: "spam", text: "You have won the lottery. Send your bank details to claim your prize." }
+];

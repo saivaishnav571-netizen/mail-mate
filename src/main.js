@@ -5,6 +5,7 @@ import "./styles.css";
 
 import { createHeroScene } from "./hero/three-scene.js";
 import { initInboxDemo } from "./ui/inbox-demo.js";
+import { MODEL_INFO, classifyText } from "./lib/ai.js";
 
 /* ------------------------------------------------------------------ */
 /*  Header and mobile navigation                                      */
@@ -155,6 +156,108 @@ stageTabs.forEach((tab, index) => {
     activateStage(next, { focus: true });
   });
 });
+
+/* ------------------------------------------------------------------ */
+/*  Model card and classifier playground                              */
+/* ------------------------------------------------------------------ */
+
+const CLASS_LABELS = {
+  important: "Important",
+  academic: "Academic",
+  internship: "Internship",
+  personal: "Personal",
+  spam: "Spam"
+};
+
+function initModelCard() {
+  const metrics = MODEL_INFO.metrics;
+  const accuracy = document.querySelector("[data-model-accuracy]");
+  const macroF1 = document.querySelector("[data-model-f1]");
+  const samples = document.querySelector("[data-model-samples]");
+  const vocab = document.querySelector("[data-model-vocab]");
+
+  if (accuracy) accuracy.textContent = `${Math.round(metrics.accuracy * 100)}%`;
+  if (macroF1) macroF1.textContent = `${Math.round(metrics.macroF1 * 100)}%`;
+  if (samples) samples.textContent = String(MODEL_INFO.samples);
+  if (vocab) vocab.textContent = String(MODEL_INFO.vocabSize);
+
+  const classList = document.querySelector("[data-model-classes]");
+  if (classList) {
+    classList.replaceChildren(
+      ...Object.entries(metrics.perClass).map(([id, values]) => {
+        const row = document.createElement("div");
+        row.className = "model-class";
+
+        const label = document.createElement("span");
+        label.className = "model-class-label";
+        label.textContent = CLASS_LABELS[id] || id;
+
+        const track = document.createElement("span");
+        track.className = "model-class-track";
+        const fill = document.createElement("span");
+        fill.className = `model-class-fill cat-bg-${id}`;
+        fill.style.width = `${Math.max(2, Math.round(values.f1 * 100))}%`;
+        track.append(fill);
+
+        const value = document.createElement("span");
+        value.className = "model-class-value";
+        value.textContent = `${Math.round(values.f1 * 100)}% F1`;
+
+        row.append(label, track, value);
+        return row;
+      })
+    );
+  }
+
+  const input = document.querySelector("[data-model-input]");
+  const run = document.querySelector("[data-model-run]");
+  const bars = document.querySelector("[data-model-playground-bars]");
+  const resultLabel = document.querySelector("[data-model-playground-result]");
+
+  function renderPrediction() {
+    if (!input || !bars) return;
+    const result = classifyText(input.value);
+    const top = result.labels[0];
+
+    if (resultLabel) {
+      resultLabel.textContent = top
+        ? `Predicted: ${top.label} · ${Math.round(top.probability * 100)}% confidence`
+        : "Predicted: no known terms";
+    }
+
+    bars.replaceChildren(
+      ...result.labels.map((item, index) => {
+        const row = document.createElement("div");
+        row.className = "model-bar";
+        row.classList.toggle("is-winner", index === 0);
+
+        const label = document.createElement("span");
+        label.className = "model-bar-label";
+        label.textContent = item.label;
+
+        const track = document.createElement("span");
+        track.className = "model-bar-track";
+        const fill = document.createElement("span");
+        fill.className = `model-bar-fill cat-bg-${item.id}`;
+        fill.style.width = `${Math.max(2, Math.round(item.probability * 100))}%`;
+        track.append(fill);
+
+        const value = document.createElement("span");
+        value.className = "model-bar-value";
+        value.textContent = `${Math.round(item.probability * 100)}%`;
+
+        row.append(label, track, value);
+        return row;
+      })
+    );
+  }
+
+  run?.addEventListener("click", renderPrediction);
+  input?.addEventListener("input", renderPrediction);
+  renderPrediction();
+}
+
+initModelCard();
 
 /* ------------------------------------------------------------------ */
 /*  Inbox demo                                                        */
