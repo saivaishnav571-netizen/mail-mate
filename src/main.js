@@ -1,7 +1,13 @@
-import "@fontsource-variable/bricolage-grotesque";
-import "@fontsource-variable/geist";
-import "@fontsource-variable/geist-mono";
-import "./styles.css";
+// Brand fonts load via Vite in dev/build. When opening index.html directly
+// (file://) these resolve to nothing, so degrade gracefully instead of
+// blocking the whole script.
+try {
+  await Promise.all([
+    import("@fontsource-variable/bricolage-grotesque"),
+    import("@fontsource-variable/geist"),
+    import("@fontsource-variable/geist-mono")
+  ]);
+} catch { /* fonts fall back to system stack */ }
 
 import { createHeroScene } from "./hero/three-scene.js";
 import { initInboxDemo } from "./ui/inbox-demo.js";

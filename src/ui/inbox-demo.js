@@ -2,6 +2,7 @@ import {
   triageEmail,
   formatDeadline,
   formatReceived,
+  CATEGORIES,
   CATEGORY_BY_ID
 } from "../lib/triage.js";
 import {
@@ -12,6 +13,19 @@ import {
   rewriteReply
 } from "../lib/ai.js";
 import { fetchTestInbox, parseDataset } from "../lib/dataset.js";
+import {
+  activateModel,
+  approveFeedback,
+  downloadBlob,
+  exportFeedbackCsv,
+  fetchAnalytics,
+  fetchCurrentModel,
+  fetchFeedback,
+  fetchHealth,
+  fetchModelVersions,
+  retrainModel,
+  submitFeedback
+} from "../lib/feedback.js";
 
 const DEMO_NOW = new Date("2026-11-15T09:00:00Z");
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -52,6 +66,39 @@ export function initInboxDemo(root) {
     deadline: root.querySelector("[data-detail-deadline]"),
     deadlineNote: root.querySelector("[data-detail-deadline-note]"),
     actions: root.querySelector("[data-detail-actions]"),
+    threadCard: root.querySelector("[data-thread-card]"),
+    threadCount: root.querySelector("[data-thread-count]"),
+    threadSubject: root.querySelector("[data-thread-subject]"),
+    threadStatus: root.querySelector("[data-thread-status]"),
+    threadEngine: root.querySelector("[data-thread-engine]"),
+    threadParticipants: root.querySelector("[data-thread-participants]"),
+    threadSummary: root.querySelector("[data-thread-summary]"),
+    threadInterview: root.querySelector("[data-thread-interview]"),
+    threadPrep: root.querySelector("[data-thread-prep]"),
+    threadTimeline: root.querySelector("[data-thread-timeline]"),
+    feedbackTotal: root.querySelector("[data-feedback-total]"),
+    categoryOverride: root.querySelector("[data-category-override]"),
+    feedbackBox: root.querySelector("[data-feedback-box]"),
+    feedbackState: root.querySelector("[data-feedback-state]"),
+    feedbackCorrect: root.querySelector("[data-feedback-correct]"),
+    feedbackIncorrect: root.querySelector("[data-feedback-incorrect]"),
+    feedbackCorrection: root.querySelector("[data-feedback-correction]"),
+    feedbackCategory: root.querySelector("[data-feedback-category]"),
+    feedbackSave: root.querySelector("[data-feedback-save]"),
+    feedbackCancel: root.querySelector("[data-feedback-cancel]"),
+    feedbackDialog: document.getElementById("feedback-dialog"),
+    feedbackClose: document.querySelector("[data-feedback-close]"),
+    feedbackStats: document.querySelector("[data-feedback-stats]"),
+    feedbackCategories: document.querySelector("[data-feedback-categories]"),
+    feedbackModel: document.querySelector("[data-feedback-model]"),
+    feedbackList: document.querySelector("[data-feedback-list]"),
+    feedbackApproved: document.querySelector("[data-feedback-approved]"),
+    feedbackToken: document.querySelector("[data-feedback-token]"),
+    feedbackRetrain: document.querySelector("[data-feedback-retrain]"),
+    feedbackExport: document.querySelector("[data-feedback-export]"),
+    feedbackExportAll: document.querySelector("[data-feedback-export-all]"),
+    feedbackModels: document.querySelector("[data-feedback-models]"),
+    feedbackAdminNote: document.querySelector("[data-feedback-admin-note]"),
     replyCard: root.querySelector("[data-reply-card]"),
     reply: root.querySelector("[data-reply]"),
     replyError: root.querySelector("[data-reply-error]"),
@@ -116,7 +163,11 @@ export function initInboxDemo(root) {
     semantic: false,
     sort: "newest",
     searchIndex: null,
-    relevance: new Map()
+    relevance: new Map(),
+    modelVersion: null,
+    feedbackTotal: 0,
+    feedbackOffline: false,
+    feedbackHydrated: false
   };
 
   let toastTimer = 0;
@@ -128,6 +179,7 @@ export function initInboxDemo(root) {
   function analyse(rows) {
     const emails = rows.map((row) => {
       const email = triageEmail(row, DEMO_NOW, { name: "Alex" });
+      if (email.analysis) email.analysis.originalCategory = email.analysis.category;
       return { ...email, replied: false, replySent: null, sentAt: null, replyTone: "warm" };
     });
     enrichInbox(emails, DEMO_NOW);
@@ -138,6 +190,7 @@ export function initInboxDemo(root) {
     state.emails = analyse(rows);
     state.searchIndex = buildSearchIndex(state.emails);
     state.relevance = new Map();
+    state.feedbackHydrated = false;
   }
 
   async function loadTestInbox({ announce = false } = {}) {
@@ -159,7 +212,8 @@ export function initInboxDemo(root) {
         null;
       updateFilterButtons();
       renderAll();
-      if (announce) toast("Test inbox restored. 24 messages, 19 drafts.");
+      if (announce) toast(`Test inbox restored. ${state.emails.length} messages, ${state.emails.filter((email) => email.reply).length} drafts.`);
+      void syncFeedbackData({ rerender: true });
     } catch (error) {
       state.emails = [];
       state.selectedId = null;
@@ -189,6 +243,7 @@ export function initInboxDemo(root) {
     updateFilterButtons();
     renderAll();
     toast(`Loaded ${state.emails.length} messages from ${filename}.`);
+    void syncFeedbackData({ rerender: true });
   }
 
   function setLoading(next) {
@@ -548,6 +603,8 @@ export function initInboxDemo(root) {
     renderDeadline(email);
     renderActions(email);
     renderAI(email);
+    renderThread(email);
+    renderFeedback(email);
     renderReply(email);
   }
 
@@ -645,6 +702,453 @@ export function initInboxDemo(root) {
     updateToneButtons(email.replyTone || null);
   }
 
+  function renderThread(email) {
+    const thread = email.thread;
+    if (!thread) {
+      els.threadCard.hidden = true;
+      return;
+    }
+
+    els.threadCard.hidden = false;
+    els.threadCount.textContent = `${thread.count} message${thread.count === 1 ? "" : "s"}`;
+    els.threadSubject.textContent = thread.subject;
+    els.threadStatus.textContent = thread.status;
+    els.threadStatus.className = `thread-chip thread-status is-${thread.status.toLowerCase().replace(/\s+/g, "-")}`;
+    els.threadEngine.textContent = thread.summary?.engine || "deterministic-nlu";
+    els.threadSummary.textContent = thread.summary?.text || "No summary generated.";
+
+    els.threadParticipants.replaceChildren(
+      ...thread.participants.map((person) => {
+        const chip = document.createElement("span");
+        chip.className = "thread-person";
+        chip.title = person.email || person.name;
+        const name = document.createElement("span");
+        name.className = "thread-person-name";
+        name.textContent = person.name || person.email;
+        const address = document.createElement("span");
+        address.className = "thread-person-email";
+        address.textContent = person.email || "";
+        chip.append(name, address);
+        return chip;
+      })
+    );
+
+    els.threadInterview.textContent = thread.interview?.date
+      ? formatInterview(thread.interview.date)
+      : "No interview scheduled";
+
+    const preparation = thread.prep?.length ? thread.prep : thread.actions.slice(0, 4);
+    if (preparation.length) {
+      els.threadPrep.replaceChildren(
+        ...preparation.map((item) => {
+          const li = document.createElement("li");
+          li.textContent = item;
+          return li;
+        })
+      );
+    } else {
+      const empty = document.createElement("li");
+      empty.className = "is-empty";
+      empty.textContent = "No specific preparation requested.";
+      els.threadPrep.replaceChildren(empty);
+    }
+
+    els.threadTimeline.replaceChildren(
+      ...thread.messages.map((message) => {
+        const item = document.createElement("li");
+        item.className = `thread-event is-${message.direction === "outgoing" ? "out" : "in"}`;
+
+        const dot = document.createElement("span");
+        dot.className = "thread-event-dot";
+        dot.setAttribute("aria-hidden", "true");
+
+        const body = document.createElement("div");
+        body.className = "thread-event-body";
+
+        const head = document.createElement("span");
+        head.className = "thread-event-head";
+        const who = message.direction === "outgoing" ? "You" : message.from?.name || message.from?.email || "Unknown";
+        head.textContent = `${who} · ${formatFullDate(message.receivedAt)}`;
+
+        const gist = document.createElement("p");
+        gist.className = "thread-event-text";
+        gist.textContent = message.ai?.summary || message.body || "";
+
+        body.append(head, gist);
+        item.append(dot, body);
+        return item;
+      })
+    );
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Human-in-the-loop feedback                                        */
+  /* ------------------------------------------------------------------ */
+
+  function categoryOption(category, selected) {
+    const option = document.createElement("option");
+    option.value = category.id;
+    option.textContent = category.label;
+    option.selected = category.id === selected;
+    return option;
+  }
+
+  function renderFeedback(email) {
+    if (!els.feedbackBox) return;
+
+    const current = email.analysis.category;
+    if (els.categoryOverride) {
+      els.categoryOverride.replaceChildren(
+        ...CATEGORIES.map((category) => categoryOption(category, current))
+      );
+      els.categoryOverride.value = current;
+    }
+
+    els.feedbackCorrection.hidden = true;
+    els.feedbackCorrect.disabled = false;
+    els.feedbackIncorrect.disabled = false;
+    els.feedbackBox.classList.remove("is-correct", "is-incorrect", "is-offline");
+
+    const feedback = email.feedback;
+    if (state.feedbackOffline) {
+      els.feedbackState.textContent = "Service offline";
+      els.feedbackBox.classList.add("is-offline");
+    } else if (!feedback) {
+      els.feedbackState.textContent = "Not reviewed";
+    } else if (feedback.type === "correct") {
+      els.feedbackState.textContent = `Confirmed correct · ${feedback.modelVersion || "model"}`;
+      els.feedbackBox.classList.add("is-correct");
+    } else {
+      const label = CATEGORY_BY_ID[feedback.corrected]?.label || feedback.corrected;
+      els.feedbackState.textContent = `Corrected to ${label} · ${feedback.modelVersion || "model"}`;
+      els.feedbackBox.classList.add("is-incorrect");
+    }
+  }
+
+  function feedbackPayload(email, type, corrected) {
+    const predicted = email.analysis.originalCategory || email.analysis.category;
+    const confidence = Number(
+      (email.ai?.model?.confidence ?? (email.analysis.confidence || 50) / 100).toFixed(4)
+    );
+    const payload = {
+      email_id: email.id,
+      email_subject: email.subject,
+      email_text: email.body,
+      predicted_category: predicted,
+      original_confidence: Math.max(0, Math.min(1, confidence)),
+      feedback_type: type
+    };
+    if (state.modelVersion) payload.model_version = state.modelVersion;
+    if (type === "incorrect") payload.corrected_category = corrected;
+    return payload;
+  }
+
+  async function submitCategoryFeedback(email, type, corrected = null) {
+    if (!email || !email.analysis) return;
+    const predicted = email.analysis.originalCategory || email.analysis.category;
+    if (type === "incorrect" && (!corrected || corrected === predicted)) {
+      toast("Choose a category that differs from the prediction.");
+      return;
+    }
+
+    try {
+      const saved = await submitFeedback(feedbackPayload(email, type, corrected));
+      state.feedbackOffline = false;
+      state.modelVersion = saved.model_version || state.modelVersion;
+      email.feedback = {
+        type: saved.feedback_type,
+        corrected: saved.corrected_category,
+        modelVersion: saved.model_version,
+        at: saved.created_at
+      };
+
+      if (saved.feedback_type === "incorrect" && CATEGORY_BY_ID[saved.corrected_category]) {
+        email.analysis.originalCategory = predicted;
+        email.analysis.category = saved.corrected_category;
+        email.analysis.categoryLabel = CATEGORY_BY_ID[saved.corrected_category].label;
+      }
+
+      await refreshFeedbackTotals();
+      renderAll();
+      toast(
+        saved.feedback_type === "correct"
+          ? `Prediction confirmed and saved as ${saved.model_version}.`
+          : `Correction saved as ${saved.model_version}. No retraining was triggered.`
+      );
+    } catch (error) {
+      if (error.status === 0) state.feedbackOffline = true;
+      renderFeedback(email);
+      toast(error.message || "Feedback could not be saved.");
+    }
+  }
+
+  function applyStoredFeedback(rows) {
+    const latest = new Map();
+    for (const row of rows) {
+      if (!latest.has(row.email_id)) latest.set(row.email_id, row);
+    }
+
+    for (const email of state.emails) {
+      const row = latest.get(email.id);
+      if (!row) continue;
+      email.feedback = {
+        type: row.feedback_type,
+        corrected: row.corrected_category,
+        modelVersion: row.model_version,
+        at: row.created_at
+      };
+      if (row.feedback_type === "incorrect" && CATEGORY_BY_ID[row.corrected_category]) {
+        email.analysis.originalCategory =
+          email.analysis.originalCategory || row.predicted_category;
+        email.analysis.category = row.corrected_category;
+        email.analysis.categoryLabel = CATEGORY_BY_ID[row.corrected_category].label;
+      }
+    }
+  }
+
+  async function refreshFeedbackTotals() {
+    try {
+      const analytics = await fetchAnalytics();
+      state.feedbackTotal = analytics.total_feedback;
+      if (els.feedbackTotal) els.feedbackTotal.textContent = String(state.feedbackTotal);
+    } catch {
+      state.feedbackOffline = true;
+    }
+  }
+
+  async function syncFeedbackData({ rerender = false } = {}) {
+    try {
+      const [health, analytics, rows] = await Promise.all([
+        fetchHealth(),
+        fetchAnalytics(),
+        fetchFeedback({ limit: 500 })
+      ]);
+      state.feedbackOffline = false;
+      state.modelVersion = health.active_model;
+      state.feedbackTotal = analytics.total_feedback;
+      if (els.feedbackTotal) els.feedbackTotal.textContent = String(state.feedbackTotal);
+      if (!state.feedbackHydrated) {
+        applyStoredFeedback(rows);
+        state.feedbackHydrated = true;
+      }
+    } catch {
+      state.feedbackOffline = true;
+    }
+    if (rerender) renderAll();
+  }
+
+  function getAdminToken() {
+    const token = els.feedbackToken?.value.trim();
+    if (!token) {
+      toast("Enter the admin token to approve feedback, retrain, or activate a model.");
+      els.feedbackToken?.focus();
+      return null;
+    }
+    return token;
+  }
+
+  function openFeedbackDashboard() {
+    openDialog(els.feedbackDialog);
+    renderFeedbackDashboard();
+  }
+
+  async function renderFeedbackDashboard() {
+    if (!els.feedbackStats) return;
+    els.feedbackStats.replaceChildren();
+    els.feedbackCategories.replaceChildren();
+    els.feedbackList.replaceChildren();
+    els.feedbackModels.replaceChildren();
+    els.feedbackModel.textContent = "Loading the feedback service…";
+    els.feedbackApproved.textContent = "…";
+    if (els.feedbackAdminNote) {
+      els.feedbackAdminNote.textContent = "Retraining is manual. A candidate is evaluated before activation.";
+    }
+
+    try {
+      const [analytics, recent, versions] = await Promise.all([
+        fetchAnalytics(),
+        fetchFeedback({ limit: 25 }),
+        fetchModelVersions()
+      ]);
+
+      state.feedbackOffline = false;
+      state.feedbackTotal = analytics.total_feedback;
+      if (els.feedbackTotal) els.feedbackTotal.textContent = String(state.feedbackTotal);
+
+      const currentEmail = selectedEmail();
+      if (currentEmail) renderFeedback(currentEmail);
+
+      const stats = [
+        { label: "Total feedback", value: analytics.total_feedback },
+        { label: "Corrected predictions", value: analytics.corrected_predictions },
+        {
+          label: "User agreement · not accuracy",
+          value: `${(analytics.user_agreement_rate * 100).toFixed(1)}%`
+        },
+        { label: "Approved for training", value: analytics.approved_for_training }
+      ];
+      els.feedbackStats.replaceChildren(
+        ...stats.map((stat) => {
+          const card = document.createElement("div");
+          card.className = "brief-stat";
+          const value = document.createElement("strong");
+          value.textContent = String(stat.value);
+          const label = document.createElement("span");
+          label.textContent = stat.label;
+          card.append(value, label);
+          return card;
+        })
+      );
+
+      if (!analytics.most_frequently_corrected_categories.length) {
+        const empty = document.createElement("li");
+        empty.className = "feedback-empty";
+        empty.textContent = "No corrections yet. Agreement feedback is counted separately.";
+        els.feedbackCategories.replaceChildren(empty);
+      } else {
+        const highest = analytics.most_frequently_corrected_categories[0].count || 1;
+        els.feedbackCategories.replaceChildren(
+          ...analytics.most_frequently_corrected_categories.map((entry) => {
+            const item = document.createElement("li");
+            item.className = "feedback-category-row";
+            const label = document.createElement("span");
+            label.className = "feedback-category-name";
+            label.textContent = CATEGORY_BY_ID[entry.category]?.label || entry.category;
+            const bar = document.createElement("span");
+            bar.className = "feedback-category-bar";
+            const fill = document.createElement("span");
+            fill.style.width = `${Math.max(4, Math.round((entry.count / highest) * 100))}%`;
+            bar.append(fill);
+            const count = document.createElement("b");
+            count.textContent = String(entry.count);
+            item.append(label, bar, count);
+            return item;
+          })
+        );
+      }
+
+      if (analytics.current_model) {
+        const model = analytics.current_model;
+        const accuracy = `${(model.accuracy * 100).toFixed(1)}%`;
+        const macroF1 = `${(model.macro_f1 * 100).toFixed(1)}%`;
+        els.feedbackModel.textContent = `${model.version} · active · model accuracy ${accuracy} on a ${model.test_size}-example labelled holdout · macro F1 ${macroF1}. User agreement is reported separately.`;
+      } else {
+        els.feedbackModel.textContent = "No active model version.";
+      }
+
+      els.feedbackApproved.textContent = `${analytics.approved_for_training} approved`;
+      if (!recent.length) {
+        const empty = document.createElement("li");
+        empty.className = "feedback-empty";
+        empty.textContent = "No feedback submissions yet.";
+        els.feedbackList.replaceChildren(empty);
+      } else {
+        els.feedbackList.replaceChildren(
+          ...recent.map((row) => {
+            const item = document.createElement("li");
+            item.className = "feedback-item";
+
+            const main = document.createElement("div");
+            main.className = "feedback-item-main";
+            const subject = document.createElement("span");
+            subject.className = "feedback-item-subject";
+            subject.textContent = row.email_subject || row.email_id;
+            const change = document.createElement("span");
+            change.className = "feedback-item-change";
+            change.textContent =
+              row.feedback_type === "correct"
+                ? `Confirmed ${CATEGORY_BY_ID[row.predicted_category]?.label || row.predicted_category}`
+                : `${CATEGORY_BY_ID[row.predicted_category]?.label || row.predicted_category} → ${
+                    CATEGORY_BY_ID[row.corrected_category]?.label || row.corrected_category
+                  }`;
+            const meta = document.createElement("span");
+            meta.className = "feedback-item-meta";
+            meta.textContent = `${row.model_version} · ${Math.round(row.original_confidence * 100)}% confidence · ${new Date(
+              row.created_at
+            ).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`;
+            main.append(subject, change, meta);
+
+            const actions = document.createElement("div");
+            actions.className = "feedback-item-actions";
+            if (row.approved_for_training) {
+              const badge = document.createElement("span");
+              badge.className = "feedback-approved-badge";
+              badge.textContent = "Approved";
+              actions.append(badge);
+            } else {
+              const approve = document.createElement("button");
+              approve.type = "button";
+              approve.className = "micro-action";
+              approve.dataset.feedbackApprove = String(row.id);
+              approve.textContent = "Approve";
+              actions.append(approve);
+            }
+
+            item.append(main, actions);
+            return item;
+          })
+        );
+      }
+
+      els.feedbackModels.replaceChildren(
+        ...versions.map((model) => {
+          const item = document.createElement("li");
+          item.className = "feedback-model-row";
+
+          const main = document.createElement("div");
+          main.className = "feedback-model-main";
+          const name = document.createElement("span");
+          name.className = "feedback-model-name";
+          name.textContent = `${model.version} · ${model.training_size} training examples${
+            model.feedback_count ? ` · ${model.feedback_count} approved feedback` : ""
+          }`;
+          const metrics = document.createElement("span");
+          metrics.className = "feedback-model-meta";
+          metrics.textContent = `Accuracy ${(model.accuracy * 100).toFixed(1)}% · macro F1 ${(
+            model.macro_f1 * 100
+          ).toFixed(1)}% · ${model.test_size}-example labelled holdout`;
+          main.append(name, metrics);
+
+          if (model.is_active) {
+            const badge = document.createElement("span");
+            badge.className = "feedback-active-badge";
+            badge.textContent = "Active";
+            item.append(main, badge);
+          } else {
+            const activate = document.createElement("button");
+            activate.type = "button";
+            activate.className = "micro-action";
+            activate.dataset.feedbackActivate = model.version;
+            activate.textContent = "Activate";
+            item.append(main, activate);
+          }
+          return item;
+        })
+      );
+    } catch (error) {
+      state.feedbackOffline = true;
+      const currentEmail = selectedEmail();
+      if (currentEmail) renderFeedback(currentEmail);
+      const offline = document.createElement("div");
+      offline.className = "brief-stat";
+      const value = document.createElement("strong");
+      value.textContent = "Offline";
+      const label = document.createElement("span");
+      label.textContent = "Start the FastAPI backend to load feedback";
+      offline.append(value, label);
+      els.feedbackStats.replaceChildren(offline);
+      els.feedbackModel.textContent = error.message;
+      els.feedbackApproved.textContent = "Unavailable";
+      const empty = document.createElement("li");
+      empty.className = "feedback-empty";
+      empty.textContent =
+        "No analytics are shown because the local service is not reachable. Nothing is fabricated.";
+      els.feedbackCategories.replaceChildren(empty);
+      els.feedbackList.replaceChildren(empty.cloneNode(true));
+      els.feedbackModels.replaceChildren(empty.cloneNode(true));
+    }
+  }
+
   function renderDeadline(email) {
     els.deadline.classList.remove("is-soon", "is-none");
     const deadline = email.deadline;
@@ -724,6 +1228,21 @@ export function initInboxDemo(root) {
       minute: "2-digit",
       hour12: true
     }).format(date);
+  }
+
+  function formatInterview(date) {
+    const day = new Intl.DateTimeFormat("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "long",
+      year: "numeric"
+    }).format(date);
+    const time = new Intl.DateTimeFormat("en-GB", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }).format(date);
+    return `${day} at ${time}`;
   }
 
   /* ------------------------------------------------------------------ */
@@ -1137,6 +1656,134 @@ export function initInboxDemo(root) {
   }
 
   /* ------------------------------------------------------------------ */
+  /*  Interaction: human-in-the-loop feedback                           */
+  /* ------------------------------------------------------------------ */
+
+  document.querySelector("[data-feedback-toggle]")?.addEventListener("click", openFeedbackDashboard);
+  els.feedbackClose?.addEventListener("click", () => closeDialog(els.feedbackDialog));
+
+  els.feedbackCorrect?.addEventListener("click", () => {
+    const email = selectedEmail();
+    if (email) submitCategoryFeedback(email, "correct");
+  });
+
+  els.feedbackIncorrect?.addEventListener("click", () => {
+    const email = selectedEmail();
+    if (!email) return;
+    const current = email.analysis.originalCategory || email.analysis.category;
+    els.feedbackCategory.replaceChildren(
+      ...CATEGORIES.filter((category) => category.id !== current).map((category) =>
+        categoryOption(category, null)
+      )
+    );
+    els.feedbackCorrection.hidden = false;
+    els.feedbackCategory.focus();
+  });
+
+  els.feedbackCancel?.addEventListener("click", () => {
+    els.feedbackCorrection.hidden = true;
+  });
+
+  els.feedbackSave?.addEventListener("click", () => {
+    const email = selectedEmail();
+    if (!email) return;
+    submitCategoryFeedback(email, "incorrect", els.feedbackCategory.value);
+  });
+
+  els.categoryOverride?.addEventListener("change", () => {
+    const email = selectedEmail();
+    if (!email) return;
+    const next = els.categoryOverride.value;
+    if (next === email.analysis.category) {
+      renderFeedback(email);
+      return;
+    }
+    submitCategoryFeedback(email, "incorrect", next);
+  });
+
+  els.feedbackList?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-feedback-approve]");
+    if (!button) return;
+    const token = getAdminToken();
+    if (!token) return;
+    button.disabled = true;
+    try {
+      await approveFeedback(Number(button.dataset.feedbackApprove), token);
+      toast("Feedback approved for training.");
+      await renderFeedbackDashboard();
+    } catch (error) {
+      button.disabled = false;
+      toast(error.message || "Feedback could not be approved.");
+    }
+  });
+
+  els.feedbackModels?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-feedback-activate]");
+    if (!button) return;
+    const token = getAdminToken();
+    if (!token) return;
+    button.disabled = true;
+    try {
+      const model = await activateModel(button.dataset.feedbackActivate, token);
+      state.modelVersion = model.version;
+      toast(`${model.version} is now the active model.`);
+      await renderFeedbackDashboard();
+      renderAll();
+    } catch (error) {
+      button.disabled = false;
+      toast(error.message || "The model could not be activated.");
+    }
+  });
+
+  els.feedbackExport?.addEventListener("click", async () => {
+    try {
+      const { blob, filename } = await exportFeedbackCsv({ approvedOnly: true });
+      downloadBlob(blob, filename);
+      toast("Approved feedback exported as CSV.");
+    } catch (error) {
+      toast(error.message || "The CSV could not be exported.");
+    }
+  });
+
+  els.feedbackExportAll?.addEventListener("click", async () => {
+    try {
+      const { blob, filename } = await exportFeedbackCsv({ approvedOnly: false });
+      downloadBlob(blob, filename);
+      toast("All feedback exported as CSV.");
+    } catch (error) {
+      toast(error.message || "The CSV could not be exported.");
+    }
+  });
+
+  els.feedbackRetrain?.addEventListener("click", async () => {
+    const token = getAdminToken();
+    if (!token) return;
+    els.feedbackRetrain.disabled = true;
+    if (els.feedbackAdminNote) els.feedbackAdminNote.textContent = "Training a candidate model…";
+    try {
+      const result = await retrainModel(token);
+      const accuracy = (result.evaluation.accuracy * 100).toFixed(1);
+      const macroF1 = (result.evaluation.macro_f1 * 100).toFixed(1);
+      await renderFeedbackDashboard();
+      if (els.feedbackAdminNote) {
+        els.feedbackAdminNote.textContent = `Candidate ${result.candidate.version} trained from ${
+          result.training_samples
+        } examples (${result.feedback_used} approved feedback). Holdout accuracy ${accuracy}%, macro F1 ${macroF1}%. ${
+          result.recommended ? "It matches or beats the active model." : "It does not beat the active model."
+        } It is inactive until you activate it.`;
+      }
+      toast(`Candidate ${result.candidate.version} trained and evaluated. Not deployed.`);
+    } catch (error) {
+      if (els.feedbackAdminNote) {
+        els.feedbackAdminNote.textContent = error.message || "Retraining failed.";
+      }
+      toast(error.message || "Retraining failed.");
+    } finally {
+      els.feedbackRetrain.disabled = false;
+    }
+  });
+
+  /* ------------------------------------------------------------------ */
   /*  Interaction: mobile detail overlay                               */
   /* ------------------------------------------------------------------ */
 
@@ -1331,7 +1978,7 @@ export function initInboxDemo(root) {
     else dialog.removeAttribute("open");
   }
 
-  [approvalDialog, remindersDialog, briefDialog].forEach((dialog) => {
+  [approvalDialog, remindersDialog, briefDialog, els.feedbackDialog].forEach((dialog) => {
     dialog?.addEventListener("click", (event) => {
       if (event.target === dialog) closeDialog(dialog);
     });

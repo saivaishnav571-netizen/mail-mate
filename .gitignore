@@ -24,3 +24,9 @@ npm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Python and backend runtime artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+backend/data/

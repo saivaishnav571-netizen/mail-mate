@@ -1,3 +1,5 @@
+import { cleanEmailText, extractEntities } from "./text.js";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const CATEGORIES = [
@@ -182,6 +184,43 @@ const DEADLINE_CUE = /\b(by|before|due|deadline|until|within|no later than|send|
  * Turn loosely-shaped email data into one shape the rest of the demo can use.
  * Missing optional fields stay empty rather than being silently invented.
  */
+function parseAddress(value) {
+  if (!value) return { name: "", email: "" };
+  if (typeof value === "string") {
+    const email = value.match(/<([^>]+)>/)?.[1] || value;
+    const name = value.replace(/<[^>]+>/g, "").replace(/["']/g, "").trim();
+    return { name: name || email, email: email.trim() };
+  }
+  return {
+    name: String(value.name || value.email || "").trim(),
+    email: String(value.email || "").trim()
+  };
+}
+
+function normalizeRecipients(raw) {
+  const value = raw.to || raw.recipient || raw.recipients || [];
+  const list = Array.isArray(value) ? value : String(value).includes(",") ? String(value).split(",") : [value];
+  return list
+    .map(parseAddress)
+    .filter((person) => person.email)
+    .map((person) => ({ name: person.name || person.email, email: person.email }));
+}
+
+function normalizeAttachments(raw) {
+  if (!Array.isArray(raw.attachments)) return [];
+  return raw.attachments
+    .map((attachment) => {
+      if (typeof attachment === "string") return { name: attachment, type: "", size: 0, text: "" };
+      return {
+        name: String(attachment.name || attachment.filename || "attachment"),
+        type: String(attachment.type || attachment.mime || ""),
+        size: Number(attachment.size) || 0,
+        text: String(attachment.text || "")
+      };
+    })
+    .filter((attachment) => attachment.name);
+}
+
 export function normalizeEmail(raw, index = 0) {
   const from = raw.from || raw.sender || {};
   const fromName =
@@ -193,16 +232,23 @@ export function normalizeEmail(raw, index = 0) {
       ? (from.match(/<([^>]+)>/)?.[1] || from).trim()
       : String(from.email || raw.fromEmail || "").trim();
 
+  const body = cleanEmailText(String(raw.body || raw.text || raw.message || ""));
+
   return {
     id: String(raw.id || `mail-${index + 1}`),
     from: {
       name: fromName,
       email: fromEmail
     },
+    to: normalizeRecipients(raw),
     subject: String(raw.subject || raw.title || "Untitled message").trim(),
-    body: stripMarkup(String(raw.body || raw.text || raw.message || "")).trim(),
+    body,
     receivedAt: toValidDate(raw.receivedAt || raw.date || raw.sentAt, index),
     read: Boolean(raw.read),
+    direction: raw.direction === "outgoing" ? "outgoing" : "incoming",
+    threadId: String(raw.thread_id || raw.threadId || "").trim() || null,
+    attachments: normalizeAttachments(raw),
+    entities: extractEntities(`${raw.subject || ""}\n${body}`),
     source: raw.source || "dataset"
   };
 }
@@ -248,7 +294,8 @@ export function classifyEmail(email) {
     categoryLabel: CATEGORY_BY_ID[category].label,
     confidence,
     scores,
-    reasons
+    reasons,
+    source: "rules"
   };
 }
 
@@ -663,19 +710,6 @@ function toValidDate(value, index) {
     return fallback;
   }
   return date;
-}
-
-function stripMarkup(value) {
-  return value
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
 }
 
 function escapeRegExp(value) {

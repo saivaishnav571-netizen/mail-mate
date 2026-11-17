@@ -3,22 +3,68 @@ import { normalizeEmail } from "./triage.js";
 const MAX_EMAILS = 300;
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
 
+// Embedded fallback: the 26-message test inbox. Used when:
+// - Opening index.html directly via file:// (CORS blocks fetch)
+// - Vite dev server doesn't serve public/test-inbox.json for any reason
+// - The fetch request fails/hangs
+const EMBEDDED_TEST_INBOX = [
+  { "id": "finance-budget-01", "from": { "name": "Priya Raman", "email": "priya.raman@northstar.example" }, "subject": "Budget forecast: numbers due Friday", "body": "The Q4 forecast needs your revised numbers by Friday 20 November at 5pm.\n\nPlease upload the updated sheet to the finance drive before then. The board pack goes out on Monday, so I cannot accept changes after the cutoff.\n\nIf anything in the cost lines looks wrong, reply before Thursday and I will check it with the team.", "receivedAt": "2026-11-15T07:42:00Z", "read": false },
+  { "id": "legal-contract-02", "from": { "name": "Legal Ops", "email": "legal@northstar.example" }, "subject": "Sign the updated supplier contract", "body": "The supplier agreement is ready for signature. Please review the redlines and sign by 28 November.\n\nIf you need more time, reply before Friday 20 November so we can request an extension. The current terms expire at the end of the month.\n\nThanks,\nLegal Ops", "receivedAt": "2026-11-14T16:20:00Z", "read": false },
+  { "id": "facilities-passes-03", "from": { "name": "Facilities Desk", "email": "facilities@northstar.example" }, "subject": "New building passes from Monday", "body": "Building passes are changing. Collect your new pass from reception before Monday 16 November at 9am.\n\nBring photo ID. Access to level 4 will stop working on Monday until the new pass is activated.\n\nReply if you are working remotely that day.", "receivedAt": "2026-11-14T11:05:00Z", "read": true },
+  { "id": "accounts-invoice-04", "from": { "name": "Accounts Receivable", "email": "accounts@makerstudio.example" }, "subject": "Invoice 1042 is overdue", "body": "Invoice 1042 for the workshop booking is now overdue. Please pay the balance of £480 by Friday 20 November so we can keep the booking.\n\nReply with the payment reference once it is done. If the invoice has already been paid, send the remittance advice and we will close it.", "receivedAt": "2026-11-13T09:12:00Z", "read": false },
+  { "id": "manager-offsite-05", "from": { "name": "Sam Okafor", "email": "sam.okafor@northstar.example" }, "subject": "Offsite agenda: pick a session by Wednesday", "body": "The team offsite is on 27 November. Please choose one workshop by Wednesday 18 November at noon.\n\nI need the final headcount for catering, and the rooms are assigned by first choice. The two options are a facilitation workshop and a product strategy session.\n\nTell me which one you want and I will add you to the list.", "receivedAt": "2026-11-13T14:48:00Z", "read": true },
+  { "id": "it-maintenance-06", "from": { "name": "IT Service Desk", "email": "it@northstar.example" }, "subject": "Maintenance window tonight at 10pm", "body": "The finance server will be offline from 10pm tonight for maintenance. Save your work and log out before then.\n\nReply if you need to keep a session open overnight. The work should finish by 1am, and a status note will go out when the server is back.", "receivedAt": "2026-11-15T12:05:00Z", "read": false },
+  { "id": "international-visa-07", "from": { "name": "International Office", "email": "international@harbour.ac.example" }, "subject": "Visa document check on Tuesday", "body": "Your visa document check is on Tuesday 17 November at 10:20 in Room 2.14.\n\nBring your passport and your current BRP. The appointment takes about 20 minutes. Reply if you cannot attend, as the next available slot is in December.", "receivedAt": "2026-11-12T08:35:00Z", "read": false },
+  { "id": "spam-giftcard-08", "from": { "name": "Rewards Center", "email": "winner@rewards-center.example" }, "subject": "You have won a £850 gift card", "body": "Congratulations! You have been selected for a £850 gift card. Verify your details within 24 hours and click here to claim.\n\nThis offer is available for a limited time. No purchase is necessary. Unsubscribe at any time.", "receivedAt": "2026-11-15T05:20:00Z", "read": false },
+  { "id": "spam-crypto-09", "from": { "name": "BlockDesk", "email": "alpha@blockdesk.example" }, "subject": "Crypto alpha: 10x before December", "body": "Exclusive crypto opportunity. Our private desk is opening a limited number of spots before December.\n\nAct now. Risk-free returns are guaranteed, and members have seen 10x growth. Click here to unlock the next allocation.\n\nUnsubscribe if you do not want these updates.", "receivedAt": "2026-11-14T22:11:00Z", "read": false },
+  { "id": "spam-parcel-10", "from": { "name": "Delivery Support", "email": "support@parcel-redelivery.example" }, "subject": "Parcel held: pay £1.99 redelivery", "body": "Your parcel is held at our depot. Pay the £1.99 redelivery fee within 48 hours or it will be returned to sender.\n\nVerify payment at the link below. The courier will attempt delivery on the next working day after payment. Do not reply to this email.", "receivedAt": "2026-11-15T06:02:00Z", "read": false },
+  { "id": "spam-wire-11", "from": { "name": "CEO Office", "email": "ceo.office@northstar-payments.example" }, "subject": "Re: invoice attached — urgent wire transfer", "body": "I need you to process an urgent wire transfer today. Keep this confidential and do not call my office.\n\nOpen the attached invoice and send the payment details before the bank closes. This needs to happen quietly. Confirm as soon as it is done.", "receivedAt": "2026-11-15T08:16:00Z", "read": false },
+  { "id": "spam-webinar-12", "from": { "name": "MarketFlow", "email": "growth@marketflow.example" }, "subject": "Grow your audience with 47 proven hacks", "body": "Join our exclusive webinar and learn 47 proven hacks to grow your audience. Limited time offer for the next 24 hours.\n\nUnlock 10x growth with our framework. Click here to register and claim your bonus playbook. Unsubscribe at any time.", "receivedAt": "2026-11-13T18:40:00Z", "read": true },
+  { "id": "academic-cs341-13", "from": { "name": "Dr Ada Mensah", "email": "ada.mensah@harbour.ac.example" }, "subject": "CS 341: Assignment 3 due 23 November", "body": "Assignment 3 is now on the portal. Submit your implementation and a short reflection by Monday 23 November at 23:59.\n\nThe late penalty is 10% per day. Please read the rubric before you start, particularly the section on test coverage. The seminar on Thursday will cover the tricky part of the parser.\n\nIf you need an extension, email me before Friday with a short reason.", "receivedAt": "2026-11-14T10:30:00Z", "read": false },
+  { "id": "academic-seminar-14", "from": { "name": "Prof. Lin", "email": "j.lin@harbour.ac.example" }, "subject": "Seminar reading for Thursday", "body": "For Thursday's seminar, please read chapter 4 of the course reader and bring two discussion questions.\n\nThe room has moved to Lecture Hall B. We will spend the first half on the reading and the second half on the group project brief.\n\nNo written response is needed before the seminar.", "receivedAt": "2026-11-13T15:25:00Z", "read": true },
+  { "id": "academic-exams-15", "from": { "name": "Exams Office", "email": "exams@harbour.ac.example" }, "subject": "Exam timetable published", "body": "The January exam timetable is published. Check your seat and date by Monday 23 November.\n\nIf you have two exams on one day, email the office before Friday 20 November. The deadline for timetable clashes is final and we cannot move exams after the published date.\n\nYour student number is on the portal.", "receivedAt": "2026-11-12T13:10:00Z", "read": true },
+  { "id": "academic-project-16", "from": { "name": "Nadia Iqbal", "email": "nadia.iqbal@harbour.ac.example" }, "subject": "Group project meeting moved to Tuesday 4pm", "body": "Our group project meeting has moved to Tuesday 17 November at 4pm in the library room 2.\n\nPlease bring the literature review draft and update the shared doc before the meeting. I added comments to the introduction and the methods section.\n\nLet me know if you cannot make it.", "receivedAt": "2026-11-14T17:55:00Z", "read": false },
+  { "id": "internship-interview-17", "from": { "name": "BrightLayer Talent Team", "email": "talent@brightlayer.example" }, "to": [{ "name": "Alex Morgan", "email": "alex.morgan@northstar.example" }], "subject": "Interview invitation: Software Engineering Intern", "body": "We would like to invite you to a 30-minute interview for the Software Engineering Intern role. Please confirm a slot by Wednesday 18 November at 5pm.\n\nThe interview is planned for the week of 23 November. Bring a portfolio link and one project you can talk through. The team will send a calendar invite once you confirm.\n\nReply with the slot that works best for you.", "receivedAt": "2026-11-14T09:40:00Z", "read": false, "thread_id": "thread-brightlayer-intern-2026" },
+  { "id": "internship-thread-reply-25", "from": { "name": "Alex Morgan", "email": "alex.morgan@northstar.example" }, "to": [{ "name": "BrightLayer Talent Team", "email": "talent@brightlayer.example" }], "subject": "Re: Interview invitation: Software Engineering Intern", "body": "Hi BrightLayer Talent Team,\n\nThank you for the invitation. I am very interested in the Software Engineering Intern role and would be glad to interview.\n\nI am available on Wednesday 25 November in the morning, or Thursday 26 November after 2pm. I can bring a portfolio link and walk through my final-year project.\n\nBest,\nAlex Morgan", "receivedAt": "2026-11-14T11:05:00Z", "read": true, "direction": "outgoing", "thread_id": "thread-brightlayer-intern-2026" },
+  { "id": "internship-thread-confirm-26", "from": { "name": "BrightLayer Talent Team", "email": "talent@brightlayer.example" }, "to": [{ "name": "Alex Morgan", "email": "alex.morgan@northstar.example" }], "subject": "Re: Interview invitation: Software Engineering Intern", "body": "Thanks for confirming, Alex.\n\nYour technical interview has been rescheduled and is confirmed for Wednesday 25 November 2026 at 11:00 AM with the engineering panel. The interview will run for 45 minutes and will cover your portfolio and one project in depth.\n\nPlease prepare: a one-page resume, a portfolio link, and a short walkthrough of the project you mentioned. Join the video call five minutes early; the link will arrive the day before.\n\nBest,\nBrightLayer Talent Team", "receivedAt": "2026-11-15T08:20:00Z", "read": false, "thread_id": "thread-brightlayer-intern-2026" },
+  { "id": "internship-offer-18", "from": { "name": "People Ops at Northwind", "email": "people@northwind.example" }, "subject": "Offer letter: response requested by 24 November", "body": "We are pleased to offer you the Data Analyst internship. Please sign and return the offer letter by Tuesday 24 November.\n\nThe start date is 12 January. Reply if you have questions about the team, the equipment budget, or the hybrid schedule. We can arrange a call before you decide.\n\nWe are looking forward to your response.", "receivedAt": "2026-11-13T12:00:00Z", "read": false },
+  { "id": "internship-recruiter-19", "from": { "name": "Mira Chen", "email": "mira@foundry.example" }, "subject": "Recruiter call: send your availability", "body": "I would like to set up a 20-minute recruiter call about the graduate scheme. Send your availability for this week by tomorrow at noon.\n\nBring questions about the team and the rotation. The role starts in September, and we are interviewing on a rolling basis.\n\nA calendar invite will follow once we have a time.", "receivedAt": "2026-11-15T09:05:00Z", "read": false },
+  { "id": "internship-application-20", "from": { "name": "HireLoop", "email": "no-reply@hireloop.example" }, "subject": "Application complete: Product Intern", "body": "Your application for the Product Intern role is complete. We will review applications and reply by 30 November.\n\nNo action is needed now, but you can update your portfolio link until Friday 20 November. The hiring team will contact you directly if your profile moves forward.\n\nThanks for applying.", "receivedAt": "2026-11-11T19:30:00Z", "read": true },
+  { "id": "personal-dinner-21", "from": { "name": "Leo", "email": "leo.martin@mail.example" }, "subject": "Dinner on Saturday?", "body": "Are you free for dinner on Saturday 21 November? I can book the place near the station if you are in.\n\nLet me know by Thursday 19 November. It is a small table, so I need a yes or no before I call them. Nothing fancy.\n\nLeo", "receivedAt": "2026-11-14T20:10:00Z", "read": false },
+  { "id": "personal-birthday-22", "from": { "name": "Anika", "email": "anika.shah@mail.example" }, "subject": "Mum's birthday: book the table?", "body": "Mum's birthday is on 29 November. Can you book a table for six by Thursday 19 November? I will sort the cake and the card.\n\nLet me know what you find. The place on the high street might be full on a Saturday, so a backup would help.\n\nAnika", "receivedAt": "2026-11-13T21:45:00Z", "read": true },
+  { "id": "personal-flat-23", "from": { "name": "Maya", "email": "maya.reed@mail.example" }, "subject": "Flat viewing Thursday at 6pm", "body": "The flat viewing is confirmed for Thursday 19 November at 6pm. Please confirm you can make it and bring ID.\n\nThe agent will meet you outside the building. The current tenant is moving out at the end of the month, so the landlord wants a decision soon.\n\nText me when you are on your way.", "receivedAt": "2026-11-14T12:22:00Z", "read": false },
+  { "id": "personal-photos-24", "from": { "name": "Ravi", "email": "ravi.patel@mail.example" }, "subject": "Photos from the hike", "body": "Finally uploaded the photos from the hike. The ones by the lake came out well, and there is a good one of the whole group at the top.\n\nNo rush, but send me your favourites when you get a chance. I can put them in a shared album if you want the full set.\n\nRavi", "receivedAt": "2026-11-12T22:05:00Z", "read": true }
+];
+
 export async function fetchTestInbox() {
-  const response = await fetch(`${import.meta.env.BASE_URL}test-inbox.json`, { cache: "no-store" });
-  if (!response.ok) {
-    throw new Error(`The test inbox could not be loaded (${response.status}).`);
-  }
-  const data = await response.json();
-  const rows = Array.isArray(data) ? data : data.emails || data.messages || data.inbox;
-  if (!Array.isArray(rows)) {
-    throw new Error("The test inbox has an unexpected shape.");
+  const buildResult = (data) => {
+    const rows = Array.isArray(data) ? data : data.emails || data.messages || data.inbox;
+    if (!Array.isArray(rows)) {
+      throw new Error("The test inbox has an unexpected shape.");
+    }
+    return {
+      emails: rows.map((row, index) => normalizeEmail(row, index)),
+      errors: [],
+      label: "Test inbox"
+    };
+  };
+
+  // Try the server fetch first (works in Vite dev / build so live edits to
+  // public/test-inbox.json are picked up). If it fails for any reason, fall
+  // back to the embedded copy above.
+  try {
+    const base = typeof import.meta.env?.BASE_URL === "string" ? import.meta.env.BASE_URL : "";
+    const response = await fetch(`${base}test-inbox.json`, { cache: "no-store" });
+    if (response.ok) {
+      const data = await response.json();
+      return buildResult(data);
+    }
+  } catch {
+    // fall through to embedded copy
   }
 
-  return {
-    emails: rows.map((row, index) => normalizeEmail(row, index)),
-    errors: [],
-    label: "Test inbox"
-  };
+  // Embedded copy: always works (file://, failed fetch, Vite HTML transform drops the data island, etc.)
+  return buildResult(EMBEDDED_TEST_INBOX);
 }
 
 export function parseDataset(text, filename = "dataset") {

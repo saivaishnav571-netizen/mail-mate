@@ -29,11 +29,11 @@ const analyzed = enrichInbox(
 );
 
 test("trains the classifier from the labelled examples", () => {
-  assert.equal(TRAINING_SAMPLES.length, 75);
+  assert.equal(TRAINING_SAMPLES.length, 125);
   assert.equal(MODEL.samples, TRAINING_SAMPLES.length);
   assert.equal(MODEL_INFO.classes, 5);
   assert.ok(MODEL.vocabulary.size > 100);
-  assert.equal(MODEL_INFO.name, "Multinomial Naive Bayes");
+  assert.equal(MODEL_INFO.name, "TF-IDF + Logistic Regression");
 });
 
 test("reports honest cross-validation metrics", () => {

@@ -7,7 +7,7 @@ const reference = new Date("2026-11-15T09:00:00Z");
 const inbox = JSON.parse(readFileSync(new URL("../public/test-inbox.json", import.meta.url), "utf8"));
 const analyzed = inbox.map((email, index) => triageEmail(email, reference, { name: "Alex" }));
 
-test("classifies the 24-message test inbox into the expected categories", () => {
+test("classifies the 26-message test inbox into the expected categories", () => {
   const expected = {
     "finance-budget-01": "important",
     "legal-contract-02": "important",
@@ -26,6 +26,8 @@ test("classifies the 24-message test inbox into the expected categories", () => 
     "academic-exams-15": "academic",
     "academic-project-16": "academic",
     "internship-interview-17": "internship",
+    "internship-thread-reply-25": "internship",
+    "internship-thread-confirm-26": "internship",
     "internship-offer-18": "internship",
     "internship-recruiter-19": "internship",
     "internship-application-20": "internship",
@@ -41,7 +43,7 @@ test("classifies the 24-message test inbox into the expected categories", () => 
   assert.deepEqual(countByCategory(analyzed), {
     important: 7,
     academic: 4,
-    internship: 4,
+    internship: 6,
     personal: 4,
     spam: 5
   });

@@ -1,14 +1,12 @@
-import { CATEGORIES, CATEGORY_BY_ID } from "./triage.js";
+import { CATEGORIES, CATEGORY_BY_ID, buildReply, createReminder } from "./triage.js";
 import { TRAINING_SAMPLES } from "./ai-training.js";
+import { ML_MODEL, ML_METRICS, ML_MODEL_INFO, trainLogisticRegression, crossValidate } from "./ml.js";
+import { attachThreads, formatThreadDate } from "./threads.js";
+import { tokenize } from "./text.js";
 
 const CATEGORY_IDS = CATEGORIES.map((category) => category.id);
 const DAY_MS = 24 * 60 * 60 * 1000;
-
-const STOPWORDS = new Set(
-  `a about above after again against all am an and any are aren't as at be because been before being below between both but by can can't cannot could couldn't did didn't do does doesn't doing don't down during each few for from further had hadn't has hasn't have haven't having he he'd he'll he's her here here's hers herself him himself his how how's i i'd i'll i'm i've if in into is isn't it it's its itself let's me more most mustn't my myself no nor not of off on once only or other ought our ours ourselves out over own same shan't she she'd she'll she's should shouldn't so some such than that that's the their theirs them themselves then there there's these they they'd they'll they're they've this those through to too under until up very was wasn't we we'd we'll we're we've were weren't what what's when when's where where's which while who who's whom why why's with won't would wouldn't you you'd you'll you're you've your yours yourself yourselves`.split(
-    /\s+/
-  )
-);
+const MODEL_CONFIDENCE_FLOOR = 0.45;
 
 const POSITIVE_TERMS = new Set(
   `thank thanks thankful appreciate appreciated great good lovely happy glad wonderful excited welcome pleased enjoy hope free treat favourite favorite congratulations congrats nice perfect brilliant excellent fun`.split(
@@ -34,15 +32,7 @@ const DEADLINE_CUE = /\b(by|before|due|deadline|until|within|no later than|send|
 /*  Text features                                                     */
 /* ------------------------------------------------------------------ */
 
-export function tokenize(text) {
-  return String(text || "")
-    .toLowerCase()
-    .replace(/[’']/g, "")
-    .replace(/[^a-z0-9\s-]/g, " ")
-    .split(/\s+/)
-    .map((token) => token.replace(/^-+|-+$/g, ""))
-    .filter((token) => token.length >= 2 && !STOPWORDS.has(token));
-}
+export { tokenize };
 
 function vectorize(tokens, idf) {
   const counts = new Map();
@@ -77,155 +67,14 @@ function dot(a, b) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Multinomial Naive Bayes                                           */
+/*  Trained classifier                                                */
 /* ------------------------------------------------------------------ */
 
-export function trainNaiveBayes(samples) {
-  const classDocs = Object.fromEntries(CATEGORY_IDS.map((id) => [id, 0]));
-  const tokenCounts = Object.fromEntries(CATEGORY_IDS.map((id) => [id, Object.create(null)]));
-  const tokenTotals = Object.fromEntries(CATEGORY_IDS.map((id) => [id, 0]));
-  const vocabulary = new Set();
+export const MODEL = ML_MODEL;
+export const MODEL_METRICS = ML_METRICS;
+export const MODEL_INFO = ML_MODEL_INFO;
 
-  for (const sample of samples) {
-    const tokens = tokenize(sample.text);
-    classDocs[sample.category] += 1;
-    for (const token of tokens) {
-      tokenCounts[sample.category][token] = (tokenCounts[sample.category][token] || 0) + 1;
-      tokenTotals[sample.category] += 1;
-      vocabulary.add(token);
-    }
-  }
-
-  const totalDocs = samples.length;
-  const vocabSize = Math.max(1, vocabulary.size);
-
-  function predict(text) {
-    const tokens = tokenize(text);
-    const known = tokens.filter((token) => vocabulary.has(token));
-    const logScores = {};
-
-    for (const id of CATEGORY_IDS) {
-      let score = Math.log((classDocs[id] + 1) / (totalDocs + CATEGORY_IDS.length));
-      for (const token of known) {
-        const count = tokenCounts[id][token] || 0;
-        score += Math.log((count + 1) / (tokenTotals[id] + vocabSize));
-      }
-      logScores[id] = score;
-    }
-
-    const probabilities = softmax(logScores);
-    const ranked = CATEGORY_IDS.map((id) => ({
-      id,
-      label: CATEGORY_BY_ID[id].label,
-      probability: probabilities[id]
-    })).sort((a, b) => b.probability - a.probability);
-
-    const predicted = ranked[0].id;
-    const topTerms = rankTerms(known, predicted, tokenCounts, tokenTotals, vocabSize);
-
-    return {
-      predicted,
-      predictedLabel: CATEGORY_BY_ID[predicted].label,
-      probabilities,
-      ranked,
-      topTerms,
-      knownTokens: known.length,
-      confidence: ranked[0].probability
-    };
-  }
-
-  return { predict, vocabulary, vocabSize, classDocs, samples: totalDocs };
-}
-
-function rankTerms(tokens, predicted, tokenCounts, tokenTotals, vocabSize) {
-  const unique = [...new Set(tokens)];
-  const scores = new Map();
-
-  for (const token of unique) {
-    const predictedLog = Math.log((tokenCounts[predicted][token] || 0) + 1);
-    const predictedDenominator = Math.log(tokenTotals[predicted] + vocabSize);
-    const own = predictedLog - predictedDenominator;
-
-    let bestOther = -Infinity;
-    for (const id of CATEGORY_IDS) {
-      if (id === predicted) continue;
-      const other = Math.log((tokenCounts[id][token] || 0) + 1) - Math.log(tokenTotals[id] + vocabSize);
-      if (other > bestOther) bestOther = other;
-    }
-
-    scores.set(token, own - bestOther);
-  }
-
-  return [...scores.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6)
-    .map(([term, weight]) => ({ term, weight: Number(weight.toFixed(2)) }));
-}
-
-function softmax(scores) {
-  const values = Object.values(scores);
-  const max = Math.max(...values);
-  const exps = Object.fromEntries(Object.entries(scores).map(([id, value]) => [id, Math.exp(value - max)]));
-  const sum = Object.values(exps).reduce((total, value) => total + value, 0) || 1;
-  return Object.fromEntries(Object.entries(exps).map(([id, value]) => [id, value / sum]));
-}
-
-export const MODEL = trainNaiveBayes(TRAINING_SAMPLES);
-export const MODEL_METRICS = crossValidate(TRAINING_SAMPLES);
-export const MODEL_INFO = {
-  name: "Multinomial Naive Bayes",
-  samples: TRAINING_SAMPLES.length,
-  vocabSize: MODEL.vocabSize,
-  classes: CATEGORY_IDS.length,
-  metrics: MODEL_METRICS
-};
-
-export function crossValidate(samples, folds = 5) {
-  const predictions = [];
-
-  for (let fold = 0; fold < folds; fold += 1) {
-    const training = samples.filter((_, index) => index % folds !== fold);
-    const testing = samples.filter((_, index) => index % folds === fold);
-    const model = trainNaiveBayes(training);
-    for (const sample of testing) {
-      predictions.push({
-        expected: sample.category,
-        predicted: model.predict(sample.text).predicted
-      });
-    }
-  }
-
-  return metricsFromPredictions(predictions);
-}
-
-function metricsFromPredictions(predictions) {
-  const perClass = {};
-
-  for (const label of CATEGORY_IDS) {
-    const truePositive = predictions.filter((item) => item.expected === label && item.predicted === label).length;
-    const falsePositive = predictions.filter((item) => item.expected !== label && item.predicted === label).length;
-    const falseNegative = predictions.filter((item) => item.expected === label && item.predicted !== label).length;
-    const precision = truePositive + falsePositive ? truePositive / (truePositive + falsePositive) : 0;
-    const recall = truePositive + falseNegative ? truePositive / (truePositive + falseNegative) : 0;
-    const f1 = precision + recall ? (2 * precision * recall) / (precision + recall) : 0;
-    perClass[label] = {
-      precision,
-      recall,
-      f1,
-      support: truePositive + falseNegative
-    };
-  }
-
-  const correct = predictions.filter((item) => item.expected === item.predicted).length;
-  const macroF1 = CATEGORY_IDS.reduce((total, label) => total + perClass[label].f1, 0) / CATEGORY_IDS.length;
-
-  return {
-    accuracy: predictions.length ? correct / predictions.length : 0,
-    macroF1,
-    perClass,
-    total: predictions.length
-  };
-}
+export { trainLogisticRegression, crossValidate };
 
 export function classifyText(text) {
   const prediction = MODEL.predict(text);
@@ -420,6 +269,46 @@ export function analyzeEmailAI(email, reference = new Date()) {
   };
 }
 
+/* ------------------------------------------------------------------ */
+/*  Thread intelligence                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Build a thread summary from the actual messages. The classifier and
+ * sentiment model run over the real transcript; the prose is composed from
+ * the extractive summaries of the first and last message, so the text is
+ * generative over the conversation rather than a hard-coded paragraph.
+ */
+export function summarizeThreadAI(thread) {
+  const transcript = thread.messages
+    .map((email) => `${email.subject || ""}. ${email.body || ""}`)
+    .join("\n");
+  const prediction = MODEL.predict(transcript);
+  const sentiment = analyzeSentiment(transcript);
+  const names = thread.participants.map((person) => person.name || person.email);
+  const first = thread.messages[0];
+  const last = thread.messages[thread.messages.length - 1];
+
+  const parts = [
+    `${thread.count} message${thread.count === 1 ? "" : "s"} between ${names.join(" and ")}.`,
+    `The on-device classifier reads the thread as ${prediction.predictedLabel} (${Math.round(
+      prediction.confidence * 100
+    )}% confidence) with a ${sentiment.label.toLowerCase()} tone.`,
+    `Opening: ${summarizeEmail(first)}`
+  ];
+
+  if (last !== first) parts.push(`Latest: ${summarizeEmail(last)}`);
+  if (thread.interview?.date) {
+    parts.push(`Interview confirmed for ${formatThreadDate(thread.interview.date)}.`);
+  }
+  if (thread.prep?.length) parts.push(`Preparation: ${thread.prep.join("; ")}.`);
+
+  return {
+    text: parts.join(" "),
+    engine: `${MODEL_INFO.name} · ${MODEL_INFO.samples} training samples · on-device`
+  };
+}
+
 export function enrichInbox(emails, reference = new Date()) {
   for (const email of emails) {
     const ai = analyzeEmailAI(email, reference);
@@ -436,6 +325,8 @@ export function enrichInbox(emails, reference = new Date()) {
   for (const email of emails) {
     email.ai.similar = findSimilar(index, email, 3);
   }
+
+  attachThreads(emails, { reference, summarize: summarizeThreadAI });
 
   return emails;
 }

@@ -130,10 +130,33 @@
   {
     "id": "internship-interview-17",
     "from": { "name": "BrightLayer Talent Team", "email": "talent@brightlayer.example" },
+    "to": [{ "name": "Alex Morgan", "email": "alex.morgan@northstar.example" }],
     "subject": "Interview invitation: Software Engineering Intern",
-    "body": "We would like to invite you to a 30-minute interview for the Software Engineering Intern role. Please confirm a slot by Wednesday 18 November at 5pm.\n\nThe interview is on Tuesday 24 November. Bring a portfolio link and one project you can talk through. The team will send a calendar invite once you confirm.\n\nReply with the slot that works best for you.",
+    "body": "We would like to invite you to a 30-minute interview for the Software Engineering Intern role. Please confirm a slot by Wednesday 18 November at 5pm.\n\nThe interview is planned for the week of 23 November. Bring a portfolio link and one project you can talk through. The team will send a calendar invite once you confirm.\n\nReply with the slot that works best for you.",
     "receivedAt": "2026-11-14T09:40:00Z",
-    "read": false
+    "read": false,
+    "thread_id": "thread-brightlayer-intern-2026"
+  },
+  {
+    "id": "internship-thread-reply-25",
+    "from": { "name": "Alex Morgan", "email": "alex.morgan@northstar.example" },
+    "to": [{ "name": "BrightLayer Talent Team", "email": "talent@brightlayer.example" }],
+    "subject": "Re: Interview invitation: Software Engineering Intern",
+    "body": "Hi BrightLayer Talent Team,\n\nThank you for the invitation. I am very interested in the Software Engineering Intern role and would be glad to interview.\n\nI am available on Wednesday 25 November in the morning, or Thursday 26 November after 2pm. I can bring a portfolio link and walk through my final-year project.\n\nBest,\nAlex Morgan",
+    "receivedAt": "2026-11-14T11:05:00Z",
+    "read": true,
+    "direction": "outgoing",
+    "thread_id": "thread-brightlayer-intern-2026"
+  },
+  {
+    "id": "internship-thread-confirm-26",
+    "from": { "name": "BrightLayer Talent Team", "email": "talent@brightlayer.example" },
+    "to": [{ "name": "Alex Morgan", "email": "alex.morgan@northstar.example" }],
+    "subject": "Re: Interview invitation: Software Engineering Intern",
+    "body": "Thanks for confirming, Alex.\n\nYour technical interview has been rescheduled and is confirmed for Wednesday 25 November 2026 at 11:00 AM with the engineering panel. The interview will run for 45 minutes and will cover your portfolio and one project in depth.\n\nPlease prepare: a one-page resume, a portfolio link, and a short walkthrough of the project you mentioned. Join the video call five minutes early; the link will arrive the day before.\n\nBest,\nBrightLayer Talent Team",
+    "receivedAt": "2026-11-15T08:20:00Z",
+    "read": false,
+    "thread_id": "thread-brightlayer-intern-2026"
   },
   {
     "id": "internship-offer-18",
