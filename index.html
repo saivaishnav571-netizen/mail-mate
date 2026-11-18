@@ -1419,6 +1419,18 @@
           <button class="btn btn-quiet btn-sm" type="button" data-intel-retry>Try again</button>
         </div>
 
+        <div class="intel-offline" data-intel-offline role="status" hidden>
+          <p class="intel-offline-title">Backend not deployed</p>
+          <p class="intel-offline-message">
+            The AI Intelligence Center requires the MailMate backend. The deployed preview currently
+            runs in frontend-only mode.
+          </p>
+          <p class="intel-offline-hint">
+            Run <code>npm run api</code> and open <code>http://127.0.0.1:5173</code> to see live
+            held-out metrics.
+          </p>
+        </div>
+
         <div class="intel-content" data-intel-content hidden>
           <section class="intel-section" aria-labelledby="intel-performance-title">
             <div class="intel-section-head">

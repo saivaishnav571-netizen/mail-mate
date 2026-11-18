@@ -24,6 +24,7 @@ import {
   fetchFeedback,
   fetchHealth,
   fetchModelVersions,
+  isBackendConfigured,
   retrainModel,
   submitFeedback
 } from "../lib/feedback.js";
@@ -944,6 +945,10 @@ export function initInboxDemo(root) {
   }
 
   async function refreshFeedbackTotals() {
+    if (!isBackendConfigured()) {
+      state.feedbackOffline = true;
+      return;
+    }
     try {
       const analytics = await fetchAnalytics();
       state.feedbackTotal = analytics.total_feedback;
@@ -954,6 +959,11 @@ export function initInboxDemo(root) {
   }
 
   async function syncFeedbackData({ rerender = false } = {}) {
+    if (!isBackendConfigured()) {
+      state.feedbackOffline = true;
+      if (rerender) renderAll();
+      return;
+    }
     try {
       const [health, analytics, rows] = await Promise.all([
         fetchHealth(),

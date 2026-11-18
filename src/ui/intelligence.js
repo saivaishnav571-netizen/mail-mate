@@ -8,7 +8,12 @@
  */
 
 import { CATEGORY_BY_ID } from "../lib/triage.js";
-import { FeedbackApiError, fetchIntelligence, reportEmailAnalytics } from "../lib/feedback.js";
+import {
+  FeedbackApiError,
+  fetchIntelligence,
+  isBackendConfigured,
+  reportEmailAnalytics
+} from "../lib/feedback.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -90,10 +95,12 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
 
   const els = {
     close: dialog.querySelector("[data-intelligence-close]"),
+    statusWrap: dialog.querySelector(".intel-status"),
     status: dialog.querySelector("[data-intel-status]"),
     refresh: dialog.querySelector("[data-intel-refresh]"),
     warning: dialog.querySelector("[data-intel-warning]"),
     loading: dialog.querySelector("[data-intel-loading]"),
+    offline: dialog.querySelector("[data-intel-offline]"),
     error: dialog.querySelector("[data-intel-error]"),
     errorMessage: dialog.querySelector("[data-intel-error-message]"),
     retry: dialog.querySelector("[data-intel-retry]"),
@@ -122,6 +129,7 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
   const toggles = Array.from(document.querySelectorAll("[data-intelligence-toggle]"));
   let loading = false;
   let ingestedSignature = null;
+  const backendAvailable = () => isBackendConfigured();
 
   toggles.forEach((toggle) => toggle.addEventListener("click", openCenter));
   els.close?.addEventListener("click", () => dialog.close());
@@ -136,30 +144,37 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
     if (!dialog.open) {
       if (typeof dialog.showModal === "function") dialog.showModal();
       else dialog.setAttribute("open", "");
-      await loadCenter();
+    }
+    if (!backendAvailable()) {
+      showOffline();
       return;
     }
-    // A second toggle press refreshes the open dashboard.
     await loadCenter();
   }
 
   async function loadCenter() {
+    // Static hosting has no API. Show the notice without firing requests that
+    // could only fail, and never render placeholder metrics.
+    if (!backendAvailable()) {
+      showOffline();
+      return;
+    }
     if (loading) return;
     loading = true;
     dialog.setAttribute("aria-busy", "true");
     if (els.refresh) els.refresh.disabled = true;
     hideWarning();
     showLoading();
-    setStatus("Connecting…");
+    setStatus("Connecting…", "waiting");
 
     try {
       await ingestInbox();
       const data = await fetchIntelligence();
       render(data);
-      setStatus(`Live · ${formatDate(data.generated_at)}`);
+      setStatus(`Backend connected · ${formatDate(data.generated_at)}`, "connected");
     } catch (error) {
       showError(error);
-      setStatus("Unavailable");
+      setStatus("Backend unavailable", "down");
     } finally {
       loading = false;
       dialog.removeAttribute("aria-busy");
@@ -186,8 +201,13 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
     }
   }
 
-  function setStatus(text) {
+  function setStatus(text, state = "") {
     if (els.status) els.status.textContent = text;
+    if (els.statusWrap) {
+      els.statusWrap.classList.toggle("is-connected", state === "connected");
+      els.statusWrap.classList.toggle("is-down", state === "down");
+      els.statusWrap.classList.toggle("is-preview", state === "preview");
+    }
   }
 
   function showWarning(text) {
@@ -204,18 +224,23 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
 
   function showLoading() {
     if (els.loading) els.loading.hidden = false;
+    if (els.offline) els.offline.hidden = true;
     if (els.error) els.error.hidden = true;
     if (els.content) els.content.hidden = true;
+    if (els.refresh) els.refresh.hidden = false;
   }
 
   function showContent() {
     if (els.loading) els.loading.hidden = true;
+    if (els.offline) els.offline.hidden = true;
     if (els.error) els.error.hidden = true;
     if (els.content) els.content.hidden = false;
+    if (els.refresh) els.refresh.hidden = false;
   }
 
   function showError(error) {
     if (els.loading) els.loading.hidden = true;
+    if (els.offline) els.offline.hidden = true;
     if (els.content) els.content.hidden = true;
     if (els.error) els.error.hidden = false;
     if (els.errorMessage) {
@@ -226,9 +251,29 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
       if (error instanceof FeedbackApiError && (error.status === 0 || error.status === 502)) {
         message =
           "The intelligence service is offline. Start the FastAPI backend with `npm run api`, then press Try again.";
+      } else if (error instanceof FeedbackApiError && error.status === 404) {
+        message =
+          "The backend responded with HTTP 404, so its API may be out of date. Restart it with `npm run api` and try again.";
       }
       els.errorMessage.textContent = message;
     }
+  }
+
+  /**
+   * Static hosting (the Vercel preview) has no backend. Show an honest notice
+   * instead of a network error, and leave every metric area empty.
+   */
+  function showOffline() {
+    if (els.loading) els.loading.hidden = true;
+    if (els.error) els.error.hidden = true;
+    if (els.content) els.content.hidden = true;
+    if (els.warning) els.warning.hidden = true;
+    if (els.offline) els.offline.hidden = false;
+    if (els.refresh) {
+      els.refresh.disabled = true;
+      els.refresh.hidden = true;
+    }
+    setStatus("Frontend-only preview", "preview");
   }
 
   /* ------------------------------------------------------------------ */

@@ -4,9 +4,51 @@
  * The demo stays usable when the service is not running: callers catch
  * FeedbackApiError and show an explicit "service offline" message rather than
  * pretending feedback was stored.
+ *
+ * Static hosting (for example the Vercel preview) has no backend at all. The
+ * helpers below let the UI detect that up front instead of firing requests
+ * that can only return 404.
  */
 
-const API_BASE = "/api";
+const DEFAULT_API_BASE = "/api";
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+
+function readEnvBase() {
+  try {
+    const value = import.meta.env?.VITE_API_BASE_URL;
+    return typeof value === "string" ? value.trim().replace(/\/+$/, "") : "";
+  } catch {
+    return "";
+  }
+}
+
+const ENV_API_BASE = readEnvBase();
+
+export function apiBaseUrl() {
+  return ENV_API_BASE || DEFAULT_API_BASE;
+}
+
+/**
+ * Classify where this page is running.
+ *
+ * - "local": served from localhost, where the Vite proxy reaches the API.
+ * - "remote": `VITE_API_BASE_URL` names a deployed API origin.
+ * - "frontend-only": static hosting with no API behind it (e.g. Vercel).
+ */
+export function backendMode(
+  location = typeof window !== "undefined" ? window.location : null,
+  envBase = ENV_API_BASE
+) {
+  if (envBase) return "remote";
+  if (!location) return "local";
+  if (location.protocol === "file:") return "frontend-only";
+  const host = String(location.hostname || "").toLowerCase();
+  return LOCAL_HOSTNAMES.has(host) ? "local" : "frontend-only";
+}
+
+export function isBackendConfigured(location, envBase) {
+  return backendMode(location, envBase) !== "frontend-only";
+}
 
 export class FeedbackApiError extends Error {
   constructor(message, status = 0, details = null) {
@@ -35,7 +77,7 @@ async function request(path, { method = "GET", body, adminToken, headers = {} } 
 
   let response;
   try {
-    response = await fetch(`${API_BASE}${path}`, init);
+    response = await fetch(`${apiBaseUrl()}${path}`, init);
   } catch (error) {
     throw new FeedbackApiError(
       "The feedback service is offline. Start the FastAPI backend on port 8000.",

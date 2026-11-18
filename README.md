@@ -97,6 +97,8 @@ The **Intelligence** button in the app bar (and the link in the AI section) open
 
 The dashboard has explicit loading, empty and error states, and refreshes only when opened or when **Refresh** is pressed. Opening it ingests current inbox metadata once per inbox state and never retrains or activates a model.
 
+Static hosting (such as the Vercel preview) has no backend. The dashboard detects that and shows a **Backend not deployed** notice with a *frontend-only preview* status instead of calling `/api` or showing any metrics. To point a deployed build at a deployed API, set `VITE_API_BASE_URL` at build time (include the `/api` suffix, for example `https://mailmate-api.example.com/api`) and add that origin to the backend CORS list.
+
 ## Stack
 
 - [Vite](https://vite.dev/)
