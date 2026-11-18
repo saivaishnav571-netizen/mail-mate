@@ -111,3 +111,143 @@ class StatusOut(BaseModel):
     active_model: str | None
     feedback_count: int
     approval_required: bool = True
+
+
+# ---------------------------------------------------------------------------
+# Intelligence centre
+# ---------------------------------------------------------------------------
+
+
+class PerCategoryMetric(BaseModel):
+    category: Category
+    precision: float
+    recall: float
+    f1: float
+    support: int
+
+
+class ConfusionMatrixOut(BaseModel):
+    labels: list[Category]
+    matrix: list[list[int]]
+
+
+class ModelMetricsOut(BaseModel):
+    accuracy: float
+    precision_macro: float
+    recall_macro: float
+    macro_f1: float
+    correct: int
+    test_size: int
+    dataset: str
+    per_category: list[PerCategoryMetric]
+    confusion_matrix: ConfusionMatrixOut
+    prediction_count: int
+    latency_ms: float
+    evaluated_at: datetime
+
+
+class ModelInfoOut(BaseModel):
+    name: str
+    version: str
+    algorithm: str
+    algorithm_id: str
+    is_active: bool
+    created_at: datetime
+    training_samples: int
+    test_samples: int
+    feedback_samples: int
+    tfidf: dict
+    notes: str | None = None
+    reconstructed: bool = False
+
+
+class ComparisonModelOut(BaseModel):
+    id: str
+    name: str
+    detail: str
+    accuracy: float
+    precision_macro: float
+    recall_macro: float
+    macro_f1: float
+    train_ms: float
+
+
+class ModelComparisonOut(BaseModel):
+    metric: str
+    best_model: str
+    models: list[ComparisonModelOut]
+    note: str
+
+
+class EmailAnalysisIn(BaseModel):
+    email_id: str = Field(min_length=1, max_length=160)
+    category: Category
+    confidence: float = Field(ge=0.0, le=1.0)
+    model_confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    priority: int = Field(default=0, ge=0, le=100)
+    received_at: datetime | None = None
+
+
+class EmailAnalysisBatchIn(BaseModel):
+    dataset: str = Field(default="Test inbox", min_length=1, max_length=160)
+    messages: list[EmailAnalysisIn] = Field(min_length=1, max_length=500)
+
+
+class EmailAnalysisBatchOut(BaseModel):
+    received: int
+    stored: int
+    duplicates: int
+    total_analyzed: int
+
+
+class CountBucket(BaseModel):
+    label: str
+    count: int
+
+
+class TimelinePoint(BaseModel):
+    date: str
+    count: int
+
+
+class EmailAnalyticsOut(BaseModel):
+    total_analyzed: int
+    unique_messages: int
+    category_distribution: list[CategoryCount]
+    priority_distribution: list[CountBucket]
+    confidence_distribution: list[CountBucket]
+    timeline: list[TimelinePoint]
+    last_analyzed_at: datetime | None
+    datasets: list[str]
+
+
+class InferenceOut(BaseModel):
+    average_latency_ms: float
+    total_predictions: int
+    model_loaded: bool
+    artifact_exists: bool
+    model_load_ms: float | None
+    status: Literal["loaded", "artifact_missing", "load_failed"]
+
+
+class IntelligenceOut(BaseModel):
+    generated_at: datetime
+    model: ModelInfoOut
+    metrics: ModelMetricsOut
+    comparison: ModelComparisonOut
+    email_analytics: EmailAnalyticsOut
+    feedback: AnalyticsOut
+    inference: InferenceOut
+    disclosures: list[str]
+
+
+class PredictIn(BaseModel):
+    text: str = Field(min_length=1, max_length=20_000)
+
+
+class PredictOut(BaseModel):
+    model_version: str
+    predicted_category: Category
+    confidence: float
+    probabilities: dict[str, float]
+    latency_ms: float

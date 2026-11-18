@@ -193,6 +193,10 @@
                   Feedback
                   <span class="app-count app-count--quiet" data-feedback-total>0</span>
                 </button>
+                <button class="app-action app-action--ai" type="button" data-intelligence-toggle>
+                  <span class="ai-glyph" aria-hidden="true">◈</span>
+                  Intelligence
+                </button>
                 <button class="app-action" type="button" data-upload-trigger>Upload</button>
                 <button class="app-action" type="button" data-reset>Reset</button>
               </div>
@@ -844,6 +848,10 @@
                 beside it, and every prediction shows its probabilities and top terms.
               </p>
               <p class="micro-note">No API key · no cloud call · deterministic at load time</p>
+              <button class="btn btn-quiet btn-sm intel-open-link" type="button" data-intelligence-toggle>
+                Open AI Intelligence Center
+                <span aria-hidden="true">→</span>
+              </button>
             </div>
           </div>
 
@@ -1373,6 +1381,162 @@
           <ul class="feedback-model-list" data-feedback-models></ul>
         </section>
         <p class="modal-note">User agreement ≠ model accuracy. No retraining runs automatically.</p>
+      </div>
+    </dialog>
+
+    <dialog class="modal intelligence-modal" id="intelligence-dialog" aria-labelledby="intelligence-dialog-title">
+      <div class="modal-inner">
+        <div class="modal-head">
+          <div>
+            <p class="eyebrow">Model observability</p>
+            <h2 id="intelligence-dialog-title">AI Intelligence Center</h2>
+          </div>
+          <button class="modal-close" type="button" data-intelligence-close aria-label="Close AI Intelligence Center">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" />
+            </svg>
+          </button>
+        </div>
+        <p class="modal-intro">
+          Held-out model metrics, inbox aggregates and service inference counters. Everything here is
+          measured from the running backend — nothing is estimated or simulated.
+        </p>
+        <div class="intel-toolbar">
+          <span class="intel-status"><i class="live-dot" aria-hidden="true"></i><span data-intel-status aria-live="polite">Connecting…</span></span>
+          <button class="text-link" type="button" data-intel-refresh>Refresh</button>
+        </div>
+        <p class="intel-warning" data-intel-warning hidden></p>
+
+        <div class="intel-loading" data-intel-loading aria-hidden="true">
+          <div class="intel-skeleton intel-skeleton--kpis"></div>
+          <div class="intel-skeleton intel-skeleton--wide"></div>
+          <div class="intel-skeleton intel-skeleton--wide"></div>
+        </div>
+
+        <div class="intel-error" data-intel-error role="alert" hidden>
+          <p class="intel-error-title">Intelligence service unavailable</p>
+          <p class="intel-error-message" data-intel-error-message>—</p>
+          <button class="btn btn-quiet btn-sm" type="button" data-intel-retry>Try again</button>
+        </div>
+
+        <div class="intel-content" data-intel-content hidden>
+          <section class="intel-section" aria-labelledby="intel-performance-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-performance-title">Model performance</h3>
+                <p class="intel-section-note">Measured on a held-out labelled test set — never training accuracy.</p>
+              </div>
+              <span class="intel-badge">held-out evaluation</span>
+            </div>
+            <div class="intel-kpis" data-intel-kpis></div>
+            <div class="intel-split">
+              <div class="intel-panel">
+                <h4>Per-category report</h4>
+                <div class="intel-table-wrap" data-intel-categories></div>
+              </div>
+              <div class="intel-panel">
+                <h4>Confusion matrix</h4>
+                <div class="intel-table-wrap intel-table-wrap--matrix" data-intel-matrix></div>
+                <p class="intel-hint">Rows are actual labels, columns are predictions.</p>
+              </div>
+            </div>
+            <p class="intel-note" data-intel-metrics-note></p>
+          </section>
+
+          <section class="intel-section" aria-labelledby="intel-comparison-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-comparison-title">Model comparison</h3>
+                <p class="intel-section-note">Same TF-IDF features and same fixed split for every algorithm.</p>
+              </div>
+              <span class="intel-badge intel-badge--quiet">evaluation only</span>
+            </div>
+            <div class="intel-comparison" data-intel-comparison></div>
+            <p class="intel-note" data-intel-comparison-note></p>
+          </section>
+
+          <section class="intel-section" aria-labelledby="intel-info-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-info-title">Model information</h3>
+                <p class="intel-section-note">The active artifact behind the feedback service.</p>
+              </div>
+            </div>
+            <dl class="intel-info" data-intel-model></dl>
+          </section>
+
+          <section class="intel-section" aria-labelledby="intel-email-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-email-title">Email analytics</h3>
+                <p class="intel-section-note">Aggregate inbox metadata only — no subjects or message bodies.</p>
+              </div>
+            </div>
+            <div class="intel-kpis intel-kpis--small" data-intel-email-kpis></div>
+            <p class="intel-empty" data-intel-email-empty hidden>
+              No email metadata recorded yet. Open this center after the inbox loads to record the
+              current aggregates.
+            </p>
+            <div class="intel-charts" data-intel-email-charts>
+              <div class="intel-panel">
+                <h4>Category distribution</h4>
+                <div class="intel-bars" data-intel-email-categories></div>
+              </div>
+              <div class="intel-panel">
+                <h4>Priority distribution</h4>
+                <div class="intel-bars" data-intel-priority></div>
+              </div>
+              <div class="intel-panel">
+                <h4>Confidence distribution</h4>
+                <div class="intel-bars" data-intel-confidence></div>
+                <p class="intel-hint">Confidence is the model's score for the label it chose, not accuracy.</p>
+              </div>
+              <div class="intel-panel intel-panel--wide">
+                <h4>Emails processed over time</h4>
+                <div class="intel-timeline" data-intel-timeline></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="intel-section" aria-labelledby="intel-feedback-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-feedback-title">Feedback analytics</h3>
+                <p class="intel-section-note">Human review signal — explicitly not model accuracy.</p>
+              </div>
+            </div>
+            <div class="intel-kpis intel-kpis--small" data-intel-feedback-kpis></div>
+            <div class="intel-panel">
+              <h4>Most frequently corrected categories</h4>
+              <div class="intel-bars" data-intel-feedback-categories></div>
+            </div>
+            <p class="intel-note" data-intel-feedback-note></p>
+          </section>
+
+          <section class="intel-section" aria-labelledby="intel-inference-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-inference-title">Inference performance</h3>
+                <p class="intel-section-note">Real service-side counters from the active model.</p>
+              </div>
+            </div>
+            <div class="intel-kpis intel-kpis--small" data-intel-inference></div>
+          </section>
+
+          <section class="intel-section intel-section--quiet" aria-labelledby="intel-disclosure-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-disclosure-title">How to read this</h3>
+              </div>
+            </div>
+            <ul class="intel-disclosures" data-intel-disclosures></ul>
+          </section>
+        </div>
+
+        <p class="modal-note">
+          Metrics are computed by scikit-learn on the labelled holdout. Opening this dashboard does not
+          retrain or activate any model.
+        </p>
       </div>
     </dialog>
 

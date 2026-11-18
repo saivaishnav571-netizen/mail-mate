@@ -23,6 +23,7 @@ MailMate is an interactive email-triage demo built with Three.js, vanilla JavaSc
 - Includes filter, search, reminder, reset, and mobile detail-overlay flows
 - Renders a live Three.js sorting-table scene with a static fallback when WebGL is unavailable
 - Collects human-in-the-loop feedback: confirm a bucket or send the correct one, then review analytics, export CSV and retrain manually
+- Includes an AI Intelligence Center with held-out metrics, a confusion matrix, a three-model comparison, inbox aggregates and inference counters
 
 ## On-device AI
 
@@ -77,8 +78,24 @@ Endpoints:
 | `GET` | `/api/model/versions` | Model version history |
 | `POST` | `/api/model/retrain` | Train an inactive candidate from approved feedback (admin) |
 | `POST` | `/api/model/{version}/activate` | Activate a stored version (admin) |
+| `GET` | `/api/intelligence` | Real held-out metrics, comparison, inbox aggregates and inference counters |
+| `POST` | `/api/emails/analyze` | Store de-duplicated inbox metadata (category, confidence, priority, timestamps) |
+| `POST` | `/api/model/predict` | Classify text with the active service model and count the prediction |
 
 The initial `v1` model is trained from the same 125 labelled examples in `src/lib/ai-training.js`, split deterministically into 100 training and 25 held-out examples. The holdout is fixed across versions so metrics stay comparable.
+
+## AI Intelligence Center
+
+The **Intelligence** button in the app bar (and the link in the AI section) opens a dashboard built from the running FastAPI service:
+
+- **Model performance:** accuracy, macro precision, macro recall, macro F1, per-category report, and the full confusion matrix. Every value is computed on the fixed labelled holdout, never on the training split.
+- **Model information:** model name, algorithm, TF-IDF configuration, version, training timestamp, training samples, test samples and feedback samples.
+- **Email analytics:** total analyzed, unique messages, category distribution, priority distribution, confidence distribution and a processed-over-time chart. Only aggregate metadata is sent; subjects and message bodies never leave the page.
+- **Feedback analytics:** total submissions, corrected predictions, user agreement, approved-for-training count and the most frequently corrected categories. Agreement is labelled as a human review signal, not accuracy.
+- **Model comparison:** Multinomial Naive Bayes, Logistic Regression and Linear SVM are trained on the same split and evaluated on the same holdout. The best macro F1 is highlighted; ties are shown as ties.
+- **Inference performance:** average service-side latency, total predictions, artifact load status and first-load time.
+
+The dashboard has explicit loading, empty and error states, and refreshes only when opened or when **Refresh** is pressed. Opening it ingests current inbox metadata once per inbox state and never retrains or activates a model.
 
 ## Stack
 
@@ -113,7 +130,7 @@ npm run test:api
 
 `npm test` covers classification, deadline and action extraction, reply drafting, reminders, JSON/CSV import validation, and the AI layer: model training and metrics, predictions, sentiment, summaries, priority scoring, semantic search, related mail, tone rewrites, and the daily brief.
 
-`npm run test:api` runs the Python API and database suite against an isolated SQLite file per test. It checks required-field persistence, validation, analytics, approval, CSV export, admin authorization, manual retraining with only approved feedback, candidate evaluation, activation, and version history.
+`npm run test:api` runs the Python API and database suite against an isolated SQLite file per test. It checks required-field persistence, validation, analytics, approval, CSV export, admin authorization, manual retraining with only approved feedback, candidate evaluation, activation, version history, held-out intelligence metrics, the three-model comparison, de-duplicated inbox ingestion, prediction counters, and that opening the dashboard never retrains automatically.
 
 ## Motion
 
@@ -143,13 +160,14 @@ index.html              Page markup and dialogs
 src/main.js             Navigation, scene lifecycle, pipeline tabs
 src/hero/               Three.js sorting-table scene
 src/ui/inbox-demo.js    Inbox state, approvals, reminders, imports, AI controls
+src/ui/intelligence.js  AI Intelligence Center dashboard rendering
 src/lib/triage.js       Classification, extraction, drafting logic
 src/lib/ai.js           TF-IDF + logistic regression, sentiment, priority, search, summaries, brief
 src/lib/ai-training.js  Labelled examples for the on-device classifier
 src/lib/dataset.js      JSON/CSV parsing and validation
-src/lib/feedback.js     Client for the local feedback service
+src/lib/feedback.js     Client for the local feedback service and intelligence endpoints
 src/lib/motion.js       Scroll reveals, progress bar, spotlights and value pulses
-src/styles/             Design tokens, section styles and the motion layer
+src/styles/             Design tokens, section styles, intelligence dashboard and motion
 public/                 Test inbox, sample CSV, favicon
 tests/                  Node unit tests
 backend/app/            FastAPI routes, SQLAlchemy models, scikit-learn pipeline

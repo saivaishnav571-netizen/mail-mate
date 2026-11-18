@@ -12,6 +12,7 @@ try {
 import { createHeroScene } from "./hero/three-scene.js";
 import { initMotion } from "./lib/motion.js";
 import { initInboxDemo } from "./ui/inbox-demo.js";
+import { initIntelligenceCenter } from "./ui/intelligence.js";
 import { MODEL_INFO, classifyText } from "./lib/ai.js";
 
 /* ------------------------------------------------------------------ */
@@ -276,4 +277,12 @@ initModelCard();
 /*  Inbox demo                                                        */
 /* ------------------------------------------------------------------ */
 
-initInboxDemo(document.querySelector("[data-demo]"));
+const inbox = initInboxDemo(document.querySelector("[data-demo]"));
+
+/* ------------------------------------------------------------------ */
+/*  AI Intelligence Center                                            */
+/* ------------------------------------------------------------------ */
+
+initIntelligenceCenter({
+  getAnalyticsSnapshot: inbox?.getAnalyticsSnapshot
+});

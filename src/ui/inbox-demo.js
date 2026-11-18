@@ -2044,4 +2044,32 @@ export function initInboxDemo(root) {
       button.setAttribute("aria-pressed", String(active));
     });
   }
+
+  return {
+    /** Aggregate metadata only: no subjects, senders or message bodies. */
+    getAnalyticsSnapshot() {
+      const ratio = (value) => {
+        const number = Number(value);
+        if (!Number.isFinite(number)) return 0;
+        return Math.min(1, Math.max(0, number / 100));
+      };
+
+      return {
+        dataset: state.label || "Test inbox",
+        messages: state.emails
+          .filter((email) => email.analysis?.category)
+          .map((email) => ({
+            email_id: email.id,
+            category: email.analysis.category,
+            confidence: ratio(email.analysis.confidence),
+            model_confidence:
+              email.ai?.model?.ensembleConfidence !== undefined
+                ? ratio(email.ai.model.ensembleConfidence)
+                : null,
+            priority: Math.round(Number(email.ai?.priority?.score) || 0),
+            received_at: email.receivedAt instanceof Date ? email.receivedAt.toISOString() : null
+          }))
+      };
+    }
+  };
 }

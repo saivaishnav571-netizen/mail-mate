@@ -238,9 +238,27 @@ html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(n + 8) {
 
 html.has-motion .model-bar-fill,
 html.has-motion .model-class-fill,
-html.has-motion .feedback-category-bar > span {
+html.has-motion .feedback-category-bar > span,
+html.has-motion .intel-bar-fill,
+html.has-motion .intel-compare-fill {
   transform-origin: left center;
   animation: mm-bar-grow 0.85s var(--ease) both;
+}
+
+html.has-motion .intel-kpi {
+  animation: mm-rise-in 0.42s var(--ease) both;
+}
+
+html.has-motion .intel-kpi:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+html.has-motion .intel-kpi:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+html.has-motion .intel-kpi:nth-child(4) {
+  animation-delay: 0.12s;
 }
 
 html.has-motion .feedback-category-row:nth-child(2) .feedback-category-bar > span {
@@ -417,6 +435,9 @@ html.has-motion .scene-frame {
   html.has-motion .model-bar-fill,
   html.has-motion .model-class-fill,
   html.has-motion .feedback-category-bar > span,
+  html.has-motion .intel-bar-fill,
+  html.has-motion .intel-compare-fill,
+  html.has-motion .intel-kpi,
   html.has-motion .brief-stat,
   html.has-motion .feedback-category-row,
   html.has-motion .feedback-item,

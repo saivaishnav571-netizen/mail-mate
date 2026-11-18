@@ -78,6 +78,19 @@ export async function fetchAnalytics() {
   return (await request("/analytics")).json();
 }
 
+export async function fetchIntelligence() {
+  return (await request("/intelligence")).json();
+}
+
+export async function reportEmailAnalytics({ dataset, messages }) {
+  return (
+    await request("/emails/analyze", {
+      method: "POST",
+      body: { dataset, messages }
+    })
+  ).json();
+}
+
 export async function fetchFeedback({ limit = 100, approvedOnly = false } = {}) {
   const params = new URLSearchParams({ limit: String(limit) });
   if (approvedOnly) params.set("approved_only", "true");
