@@ -115,6 +115,10 @@ npm run test:api
 
 `npm run test:api` runs the Python API and database suite against an isolated SQLite file per test. It checks required-field persistence, validation, analytics, approval, CSV export, admin authorization, manual retraining with only approved feedback, candidate evaluation, activation, and version history.
 
+## Motion
+
+The interface uses a small CSS and vanilla-JavaScript motion layer in `src/lib/motion.js` and `src/styles/motion.css`: scroll reveals, a scroll-progress bar, pointer spotlights on cards, staggered message rendering, a detail-pane swap, animated probability bars, and modal entrances. All motion is opt-in: `html.has-motion` is added only after the observers are wired, so content stays visible if scripts fail. `prefers-reduced-motion: reduce` disables the effects.
+
 ## Import format
 
 Upload a `.json` or `.csv` file (up to 2 MB and 300 messages). Each message needs a sender, subject, and body.
@@ -144,7 +148,8 @@ src/lib/ai.js           TF-IDF + logistic regression, sentiment, priority, searc
 src/lib/ai-training.js  Labelled examples for the on-device classifier
 src/lib/dataset.js      JSON/CSV parsing and validation
 src/lib/feedback.js     Client for the local feedback service
-src/styles/             Design tokens and section styles
+src/lib/motion.js       Scroll reveals, progress bar, spotlights and value pulses
+src/styles/             Design tokens, section styles and the motion layer
 public/                 Test inbox, sample CSV, favicon
 tests/                  Node unit tests
 backend/app/            FastAPI routes, SQLAlchemy models, scikit-learn pipeline

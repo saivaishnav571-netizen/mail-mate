@@ -1,0 +1,430 @@
+/* ------------------------------------------------------------------ */
+/*  Motion layer                                                      */
+/*                                                                    */
+/*  Opt-in only: html.has-motion is added by src/lib/motion.js after   */
+/*  the observers are wired. Without JS, every element stays visible.  */
+/* ------------------------------------------------------------------ */
+
+/* ---------- scroll progress ---------- */
+
+.scroll-progress {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px;
+  z-index: 120;
+  pointer-events: none;
+  background: rgba(34, 30, 25, 0.05);
+}
+
+.scroll-progress i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--accent-strong), var(--accent) 58%, #e8a570);
+  box-shadow: 0 0 16px rgba(212, 83, 28, 0.5);
+  will-change: transform;
+}
+
+.motion-reduced .scroll-progress {
+  display: none;
+}
+
+/* ---------- scroll reveals ---------- */
+
+html.has-motion [data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition:
+    opacity 0.72s var(--ease),
+    transform 0.72s var(--ease);
+}
+
+html.has-motion [data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+html.has-motion [data-reveal-stagger] > * {
+  opacity: 0;
+  transform: translate3d(0, 26px, 0);
+  transition:
+    opacity 0.68s var(--ease),
+    transform 0.68s var(--ease);
+  transition-delay: calc(var(--reveal-i, 0) * 55ms);
+}
+
+html.has-motion [data-reveal-stagger].is-revealed > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- pointer spotlight ---------- */
+
+html.has-motion [data-spotlight] {
+  --spot-color: rgba(212, 83, 28, 0.14);
+  position: relative;
+  isolation: isolate;
+}
+
+html.has-motion [data-spotlight]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(
+    280px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+    var(--spot-color),
+    transparent 72%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+
+@media (hover: hover) {
+  html.has-motion [data-spotlight]:hover::after {
+    opacity: 1;
+  }
+}
+
+/* ---------- card hover feedback ---------- */
+
+@media (hover: hover) {
+  html.has-motion .model-card,
+  html.has-motion .ai-feature,
+  html.has-motion .upload-card,
+  html.has-motion .schema-card,
+  html.has-motion .brief-stat,
+  html.has-motion .feedback-item {
+    transition:
+      transform 0.32s var(--ease),
+      box-shadow 0.32s ease,
+      border-color 0.32s ease;
+  }
+
+  html.has-motion .model-card:hover,
+  html.has-motion .upload-card:hover,
+  html.has-motion .schema-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+      0 1px 0 rgba(255, 255, 255, 0.7) inset,
+      0 28px 52px -40px rgba(34, 30, 25, 0.6);
+  }
+
+  html.has-motion .ai-feature:hover {
+    transform: translateY(-2px);
+    border-color: rgba(34, 30, 25, 0.22);
+  }
+
+  html.has-motion .brief-stat:hover,
+  html.has-motion .feedback-item:hover {
+    transform: translateY(-1px);
+  }
+}
+
+/* ---------- buttons, links, chips ---------- */
+
+html.has-motion .btn:hover span[aria-hidden="true"],
+html.has-motion .footer-actions .btn:hover span[aria-hidden="true"] {
+  transform: translateX(3px);
+}
+
+html.has-motion .btn span[aria-hidden="true"] {
+  display: inline-block;
+  transition: transform 0.24s var(--ease);
+}
+
+html.has-motion .app-action,
+html.has-motion .model-chip,
+html.has-motion .thread-chip,
+html.has-motion .similar-chip {
+  transition:
+    transform 0.22s var(--ease),
+    background-color 0.22s ease,
+    border-color 0.22s ease;
+}
+
+html.has-motion .similar-chip:hover,
+html.has-motion .thread-chip:hover {
+  transform: translateY(-1px);
+}
+
+/* ---------- inbox message list ---------- */
+
+html.has-motion .mail-list.is-stagger > li {
+  animation: mm-mail-in 0.42s var(--ease) both;
+  animation-delay: calc(var(--stagger-i, 0) * 26ms);
+}
+
+@keyframes mm-mail-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- detail pane swap ---------- */
+
+html.has-motion .detail.is-swapping .detail-head {
+  animation: mm-detail-head-in 0.42s var(--ease) both;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > * {
+  animation: mm-detail-part-in 0.5s var(--ease) both;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(4) {
+  animation-delay: 0.11s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(5) {
+  animation-delay: 0.14s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(6) {
+  animation-delay: 0.17s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(7) {
+  animation-delay: 0.2s;
+}
+
+html.has-motion .detail.is-swapping .detail-scroll > *:nth-child(n + 8) {
+  animation-delay: 0.23s;
+}
+
+@keyframes mm-detail-head-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -8px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mm-detail-part-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- metric / probability bars ---------- */
+
+html.has-motion .model-bar-fill,
+html.has-motion .model-class-fill,
+html.has-motion .feedback-category-bar > span {
+  transform-origin: left center;
+  animation: mm-bar-grow 0.85s var(--ease) both;
+}
+
+html.has-motion .feedback-category-row:nth-child(2) .feedback-category-bar > span {
+  animation-delay: 0.05s;
+}
+
+html.has-motion .feedback-category-row:nth-child(3) .feedback-category-bar > span {
+  animation-delay: 0.1s;
+}
+
+html.has-motion .feedback-category-row:nth-child(4) .feedback-category-bar > span {
+  animation-delay: 0.15s;
+}
+
+html.has-motion .feedback-category-row:nth-child(5) .feedback-category-bar > span {
+  animation-delay: 0.2s;
+}
+
+html.has-motion .priority-fill {
+  transition: width 0.6s var(--ease);
+}
+
+@keyframes mm-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---------- dialogs, toast, details ---------- */
+
+html.has-motion dialog.modal[open] .modal-inner {
+  animation: mm-modal-in 0.34s var(--ease) both;
+}
+
+html.has-motion dialog.modal[open]::backdrop {
+  animation: mm-backdrop-in 0.3s ease both;
+}
+
+@keyframes mm-modal-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mm-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+html.has-motion .upload-result:not([hidden]),
+html.has-motion .mail-empty:not([hidden]) {
+  animation: mm-rise-in 0.4s var(--ease) both;
+}
+
+html.has-motion details.faq-item[open] .faq-answer {
+  animation: mm-faq-in 0.32s var(--ease) both;
+}
+
+html.has-motion .brief-stat,
+html.has-motion .feedback-category-row,
+html.has-motion .feedback-item {
+  animation: mm-rise-in 0.42s var(--ease) both;
+}
+
+html.has-motion .brief-stat:nth-child(2),
+html.has-motion .feedback-category-row:nth-child(2),
+html.has-motion .feedback-item:nth-child(2) {
+  animation-delay: 0.05s;
+}
+
+html.has-motion .brief-stat:nth-child(3),
+html.has-motion .feedback-category-row:nth-child(3),
+html.has-motion .feedback-item:nth-child(3) {
+  animation-delay: 0.1s;
+}
+
+html.has-motion .brief-stat:nth-child(4),
+html.has-motion .feedback-category-row:nth-child(4),
+html.has-motion .feedback-item:nth-child(4) {
+  animation-delay: 0.15s;
+}
+
+html.has-motion .feedback-item:nth-child(n + 5) {
+  animation-delay: 0.2s;
+}
+
+@keyframes mm-rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mm-faq-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -6px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- footer ---------- */
+
+html.has-motion .footer-col a,
+html.has-motion .footer-base span {
+  transition: color 0.2s ease, transform 0.2s var(--ease);
+}
+
+@media (hover: hover) {
+  html.has-motion .footer-col a:hover {
+    transform: translateX(3px);
+  }
+}
+
+/* ---------- ambient accents ---------- */
+
+html.has-motion .live-dot {
+  animation:
+    live-pulse 2.4s ease-out infinite,
+    mm-live-breathe 4s ease-in-out infinite;
+}
+
+@keyframes mm-live-breathe {
+  0%,
+  100% {
+    background-color: var(--accent);
+  }
+  50% {
+    background-color: #e8773f;
+  }
+}
+
+html.has-motion .scene-frame {
+  transition: box-shadow 0.5s ease;
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html.has-motion [data-reveal],
+  html.has-motion [data-reveal-stagger] > * {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  html.has-motion [data-spotlight]::after,
+  .scroll-progress {
+    display: none;
+  }
+
+  html.has-motion .mail-list.is-stagger > li,
+  html.has-motion .detail.is-swapping .detail-head,
+  html.has-motion .detail.is-swapping .detail-scroll > *,
+  html.has-motion .model-bar-fill,
+  html.has-motion .model-class-fill,
+  html.has-motion .feedback-category-bar > span,
+  html.has-motion .brief-stat,
+  html.has-motion .feedback-category-row,
+  html.has-motion .feedback-item,
+  html.has-motion dialog.modal[open] .modal-inner,
+  html.has-motion dialog.modal[open]::backdrop,
+  html.has-motion details.faq-item[open] .faq-answer,
+  html.has-motion .upload-result:not([hidden]),
+  html.has-motion .mail-empty:not([hidden]) {
+    animation: none !important;
+  }
+}

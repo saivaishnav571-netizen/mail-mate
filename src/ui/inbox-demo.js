@@ -13,6 +13,7 @@ import {
   rewriteReply
 } from "../lib/ai.js";
 import { fetchTestInbox, parseDataset } from "../lib/dataset.js";
+import { pulseValue, replayAnimation } from "../lib/motion.js";
 import {
   activateModel,
   approveFeedback,
@@ -167,7 +168,10 @@ export function initInboxDemo(root) {
     modelVersion: null,
     feedbackTotal: 0,
     feedbackOffline: false,
-    feedbackHydrated: false
+    feedbackHydrated: false,
+    listSignature: "",
+    staggerUntil: 0,
+    renderedDetailId: null
   };
 
   let toastTimer = 0;
@@ -191,6 +195,8 @@ export function initInboxDemo(root) {
     state.searchIndex = buildSearchIndex(state.emails);
     state.relevance = new Map();
     state.feedbackHydrated = false;
+    state.listSignature = "";
+    state.renderedDetailId = null;
   }
 
   async function loadTestInbox({ announce = false } = {}) {
@@ -410,11 +416,19 @@ export function initInboxDemo(root) {
     const focus = state.emails.filter(
       (email) => email.analysis.category !== "spam" && !email.replied && email.ai.priority.score >= 60
     ).length;
-    els.statUnread.textContent = String(unread);
-    els.statDue.textContent = String(dueSoonCount());
-    els.statDrafts.textContent = String(drafts);
-    els.statReplied.textContent = String(replied);
-    if (els.statFocus) els.statFocus.textContent = String(focus);
+    setStat(els.statUnread, unread);
+    setStat(els.statDue, dueSoonCount());
+    setStat(els.statDrafts, drafts);
+    setStat(els.statReplied, replied);
+    setStat(els.statFocus, focus);
+  }
+
+  function setStat(node, value) {
+    if (!node) return;
+    const next = String(value);
+    const changed = node.textContent !== next && node.textContent !== "—";
+    node.textContent = next;
+    if (changed) pulseValue(node);
   }
 
   function renderReminderCount() {
@@ -433,9 +447,13 @@ export function initInboxDemo(root) {
   function renderList() {
     const emails = filteredEmails();
     const fragment = document.createDocumentFragment();
+    const signature = emails.map((email) => email.id).join("|");
+    const shouldStagger = signature !== state.listSignature && emails.length > 0;
+    state.listSignature = signature;
 
     if (!emails.length) {
       els.list.replaceChildren();
+      els.list.classList.remove("is-stagger");
       els.empty.hidden = false;
       if (state.query.trim() && state.semantic) {
         els.emptyTitle.textContent = "No semantic matches.";
@@ -456,6 +474,18 @@ export function initInboxDemo(root) {
       fragment.append(createMailItem(email));
     }
     els.list.replaceChildren(fragment);
+
+    if (shouldStagger) {
+      state.staggerUntil = performance.now() + 900;
+      Array.from(els.list.children).forEach((item, index) => {
+        item.style.setProperty("--stagger-i", String(Math.min(index, 14)));
+      });
+      els.list.classList.add("is-stagger");
+    } else if (performance.now() > state.staggerUntil) {
+      // Keep the class briefly so a quick follow-up render (e.g. feedback
+      // hydration) does not clip the entrance animation mid-flight.
+      els.list.classList.remove("is-stagger");
+    }
   }
 
   function createMailItem(email) {
@@ -561,6 +591,8 @@ export function initInboxDemo(root) {
     els.detailBody.hidden = !hasEmail;
 
     if (!hasEmail) {
+      state.renderedDetailId = null;
+      els.detailBody.classList.remove("is-swapping");
       closeDetailOverlay();
       return;
     }
@@ -606,6 +638,11 @@ export function initInboxDemo(root) {
     renderThread(email);
     renderFeedback(email);
     renderReply(email);
+
+    if (state.renderedDetailId !== email.id) {
+      state.renderedDetailId = email.id;
+      replayAnimation(els.detailBody, "is-swapping");
+    }
   }
 
   function renderAI(email) {

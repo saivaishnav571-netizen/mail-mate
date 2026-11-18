@@ -10,6 +10,7 @@ try {
 } catch { /* fonts fall back to system stack */ }
 
 import { createHeroScene } from "./hero/three-scene.js";
+import { initMotion } from "./lib/motion.js";
 import { initInboxDemo } from "./ui/inbox-demo.js";
 import { MODEL_INFO, classifyText } from "./lib/ai.js";
 
@@ -60,6 +61,12 @@ function onScroll() {
 
 onScroll();
 window.addEventListener("scroll", onScroll, { passive: true });
+
+/* ------------------------------------------------------------------ */
+/*  Page motion: scroll progress, reveals, spotlights                 */
+/* ------------------------------------------------------------------ */
+
+initMotion();
 
 /* ------------------------------------------------------------------ */
 /*  Three.js hero scene                                               */

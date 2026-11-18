@@ -33,6 +33,8 @@
   <body>
     <a class="skip-link" href="#demo">Skip to the live inbox demo</a>
 
+    <div class="scroll-progress" aria-hidden="true"><i data-scroll-progress></i></div>
+
     <header class="site-header" data-header>
       <div class="wrap nav-shell">
         <a class="brand" href="#top" aria-label="MailMate, back to top">
@@ -151,7 +153,7 @@
       <!-- Live demo -->
       <section class="section demo-section" id="demo" aria-labelledby="demo-title">
         <div class="wrap">
-          <div class="section-head section-head--split">
+          <div class="section-head section-head--split" data-reveal>
             <div>
               <p class="eyebrow">The live inbox</p>
               <h2 id="demo-title">A working inbox,<br />not a screenshot.</h2>
@@ -167,7 +169,7 @@
             </div>
           </div>
 
-          <div class="app-frame" data-demo>
+          <div class="app-frame" data-demo data-reveal>
             <div class="app-bar">
               <div class="app-ident">
                 <span class="app-dots" aria-hidden="true"><i></i><i></i><i></i></span>
@@ -536,7 +538,7 @@
       <!-- How it works -->
       <section class="section how-section" id="how" aria-labelledby="how-title">
         <div class="wrap">
-          <div class="section-head section-head--split">
+          <div class="section-head section-head--split" data-reveal>
             <div>
               <p class="eyebrow">The pipeline</p>
               <h2 id="how-title">Five passes over<br />every message.</h2>
@@ -549,7 +551,7 @@
             </div>
           </div>
 
-          <div class="pipeline">
+          <div class="pipeline" data-reveal-stagger>
             <div class="stage-tabs" role="tablist" aria-label="MailMate pipeline stages" data-stage-tabs>
               <button
                 class="stage-tab is-active"
@@ -830,7 +832,7 @@
       <!-- AI model -->
       <section class="section ai-section" id="ai" aria-labelledby="ai-title">
         <div class="wrap">
-          <div class="section-head section-head--split">
+          <div class="section-head section-head--split" data-reveal>
             <div>
               <p class="eyebrow">AI on your device</p>
               <h2 id="ai-title">A small model,<br />not a black box.</h2>
@@ -845,8 +847,8 @@
             </div>
           </div>
 
-          <div class="ai-grid">
-            <div class="model-card">
+          <div class="ai-grid" data-reveal-stagger>
+            <div class="model-card" data-spotlight>
               <div class="model-card-head">
                 <div>
                   <p class="model-kicker">Model card</p>
@@ -878,7 +880,7 @@
             </div>
 
             <div class="ai-feature-grid">
-              <article class="ai-feature">
+              <article class="ai-feature" data-spotlight>
                 <span class="ai-feature-index">01</span>
                 <h3>Probability view</h3>
                 <p>
@@ -886,7 +888,7 @@
                   runner-up are both visible, so you can see when the model is unsure.
                 </p>
               </article>
-              <article class="ai-feature">
+              <article class="ai-feature" data-spotlight>
                 <span class="ai-feature-index">02</span>
                 <h3>Priority score</h3>
                 <p>
@@ -894,7 +896,7 @@
                   0–100 score. The factors behind it are listed, not hidden.
                 </p>
               </article>
-              <article class="ai-feature">
+              <article class="ai-feature" data-spotlight>
                 <span class="ai-feature-index">03</span>
                 <h3>Tone &amp; urgency</h3>
                 <p>
@@ -902,7 +904,7 @@
                   urgent language before it reaches the reply draft.
                 </p>
               </article>
-              <article class="ai-feature">
+              <article class="ai-feature" data-spotlight>
                 <span class="ai-feature-index">04</span>
                 <h3>Extractive summary</h3>
                 <p>
@@ -910,7 +912,7 @@
                   action cues. The original message stays one click away.
                 </p>
               </article>
-              <article class="ai-feature">
+              <article class="ai-feature" data-spotlight>
                 <span class="ai-feature-index">05</span>
                 <h3>Semantic search</h3>
                 <p>
@@ -918,7 +920,7 @@
                   Related mail is suggested from the same index.
                 </p>
               </article>
-              <article class="ai-feature">
+              <article class="ai-feature" data-spotlight>
                 <span class="ai-feature-index">06</span>
                 <h3>Brief &amp; tone-aware drafts</h3>
                 <p>
@@ -934,7 +936,7 @@
       <!-- Approval -->
       <section class="section approval-section" id="approval" aria-labelledby="approval-title">
         <div class="wrap approval-grid">
-          <div class="approval-copy">
+          <div class="approval-copy" data-reveal>
             <p class="eyebrow">The approval gate</p>
             <h2 id="approval-title">Nothing sends<br />without a person.</h2>
             <p class="lede">
@@ -967,8 +969,8 @@
             <a class="btn btn-primary" href="#demo">Walk through an approval <span aria-hidden="true">→</span></a>
           </div>
 
-          <div class="approval-visual">
-            <div class="approval-slip">
+          <div class="approval-visual" data-reveal>
+            <div class="approval-slip" data-spotlight>
               <div class="slip-top">
                 <span class="slip-title">Send approval</span>
                 <span class="slip-id">MM-2481</span>
@@ -1002,7 +1004,7 @@
       <!-- Data -->
       <section class="section data-section" id="data" aria-labelledby="data-title">
         <div class="wrap">
-          <div class="section-head section-head--split">
+          <div class="section-head section-head--split" data-reveal>
             <div>
               <p class="eyebrow">Your data</p>
               <h2 id="data-title">Bring a file.<br />Keep it local.</h2>
@@ -1015,8 +1017,8 @@
             </div>
           </div>
 
-          <div class="data-grid">
-            <div class="upload-card">
+          <div class="data-grid" data-reveal-stagger>
+            <div class="upload-card" data-spotlight>
               <div
                 class="dropzone"
                 data-dropzone
@@ -1051,7 +1053,7 @@
               <div class="upload-result" data-upload-result hidden aria-live="polite"></div>
             </div>
 
-            <div class="schema-card">
+            <div class="schema-card" data-spotlight>
               <div class="schema-head">
                 <h3>One row per message.</h3>
                 <span class="schema-tag">JSON or CSV</span>
@@ -1084,7 +1086,7 @@
 
       <!-- FAQ -->
       <section class="section faq-section" id="faq" aria-labelledby="faq-title">
-        <div class="wrap faq-grid">
+        <div class="wrap faq-grid" data-reveal-stagger>
           <div class="faq-head">
             <p class="eyebrow">Before you start</p>
             <h2 id="faq-title">Fair questions.</h2>
@@ -1208,7 +1210,7 @@
 
     <footer class="site-footer" aria-labelledby="footer-title">
       <div class="wrap">
-        <div class="footer-cta">
+        <div class="footer-cta" data-reveal>
           <div>
             <p class="eyebrow eyebrow--light">Ready when you are</p>
             <h2 id="footer-title">Open the demo with<br />26 messages.</h2>
@@ -1224,7 +1226,7 @@
           </div>
         </div>
 
-        <div class="footer-grid">
+        <div class="footer-grid" data-reveal-stagger>
           <div class="footer-brand">
             <a class="brand brand--footer" href="#top" aria-label="MailMate, back to top">
               <span class="brand-mark" aria-hidden="true">
