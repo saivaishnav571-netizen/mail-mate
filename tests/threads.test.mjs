@@ -18,6 +18,55 @@ function triaged(rows = inbox) {
   return rows.map((email) => triageEmail(email, reference, { name: "Alex" }));
 }
 
+function fallbackMessage(id, fromEmail, toEmail, receivedAt, subject = "Project update") {
+  return {
+    id,
+    subject,
+    body: "Here is the latest project update.",
+    from: { name: fromEmail.split("@")[0], email: fromEmail },
+    to: [{ name: toEmail.split("@")[0], email: toEmail }],
+    receivedAt: new Date(receivedAt),
+    direction: "incoming",
+    analysis: { category: "important" }
+  };
+}
+
+test("keeps separate participant clusters with the same subject", () => {
+  const rows = [
+    fallbackMessage("alpha-1", "alpha@example.com", "alex@example.com", "2026-11-01T09:00:00Z"),
+    fallbackMessage("alpha-2", "alex@example.com", "alpha@example.com", "2026-11-02T09:00:00Z"),
+    fallbackMessage("beta-1", "beta@example.com", "sam@example.com", "2026-11-01T10:00:00Z"),
+    fallbackMessage("beta-2", "sam@example.com", "beta@example.com", "2026-11-02T10:00:00Z")
+  ];
+
+  const threads = buildThreads(rows, { reference });
+  assert.equal(threads.length, 2);
+  assert.notEqual(threads[0].id, threads[1].id);
+  assert.deepEqual(
+    threads.map((thread) => thread.messages.map((message) => message.id).sort()).sort(),
+    [["alpha-1", "alpha-2"], ["beta-1", "beta-2"]]
+  );
+});
+
+test("does not group messages with empty subjects", () => {
+  const rows = [
+    fallbackMessage("blank-1", "alpha@example.com", "alex@example.com", "2026-11-01T09:00:00Z", ""),
+    fallbackMessage("blank-2", "alex@example.com", "alpha@example.com", "2026-11-02T09:00:00Z", "")
+  ];
+
+  assert.deepEqual(buildThreads(rows, { reference }), []);
+});
+
+test("does not join fallback messages more than 30 days apart", () => {
+  const rows = [
+    fallbackMessage("old-message", "alpha@example.com", "alex@example.com", "2026-09-01T09:00:00Z"),
+    fallbackMessage("new-message", "alex@example.com", "alpha@example.com", "2026-11-01T09:00:00Z")
+  ];
+
+  assert.deepEqual(buildThreads(rows, { reference }), []);
+});
+
+
 test("groups the BrightLayer conversation by its explicit thread_id", () => {
   const emails = triaged();
   const threads = buildThreads(emails, { reference });
