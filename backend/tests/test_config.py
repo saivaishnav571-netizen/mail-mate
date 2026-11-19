@@ -24,6 +24,15 @@ def test_runtime_rejects_wildcard_cors():
         settings.validate_runtime()
 
 
+def test_runtime_rejects_non_origin_cors_values():
+    settings = Settings(
+        admin_token="a" * 32,
+        allowed_origins=("https://example.com/admin",),
+    )
+    with pytest.raises(RuntimeError, match="exact http"):
+        settings.validate_runtime()
+
+
 def test_runtime_accepts_valid_settings():
     settings = Settings(
         admin_token="a" * 32,
