@@ -142,6 +142,27 @@ def test_api_responses_are_never_cached(client):
     assert private_response.headers["cache-control"] == "no-store"
 
 
+def test_cors_allows_only_configured_origins(client):
+    allowed = client.options(
+        "/api/health",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert allowed.status_code == 200
+    assert allowed.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+    denied = client.options(
+        "/api/health",
+        headers={
+            "Origin": "https://untrusted.example",
+            "Access-Control-Request-Method": "GET",
+        },
+    )
+    assert "access-control-allow-origin" not in denied.headers
+
+
 def test_feedback_list_requires_admin(client):
     post_feedback(client, email_id="private-record")
     unauthorized = client.get("/api/feedback")
