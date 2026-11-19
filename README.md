@@ -70,7 +70,7 @@ $env:MAILMATE_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,htt
 npm run api
 ```
 
-For deployed environments, set `MAILMATE_ADMIN_TOKEN` and `MAILMATE_ALLOWED_ORIGINS` in the host's environment settings. Origins are a comma-separated list of exact frontend origins; wildcard CORS is rejected.
+For deployed environments, set `MAILMATE_ADMIN_TOKEN` and `MAILMATE_ALLOWED_ORIGINS` in the host's environment settings. Origins are a comma-separated list of exact frontend origins (for example `https://your-app.vercel.app`); wildcard CORS is rejected, and non-local origins must use HTTPS. Update the allowlist when adding a production or preview frontend domain.
 
 Admin actions use an `X-Admin-Token` header. The dashboard's token field is used for private feedback review, CSV export, approval, retraining and activation. The API refuses to start if the admin token is missing or too short. Feedback record listing and CSV export require admin authentication. Public feedback submission remains enabled for the demo.
 
