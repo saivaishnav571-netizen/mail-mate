@@ -988,7 +988,7 @@ export function initInboxDemo(root) {
   function getAdminToken() {
     const token = els.feedbackToken?.value.trim();
     if (!token) {
-      toast("Enter the admin token to approve feedback, retrain, or activate a model.");
+      toast("Enter the admin token to review feedback, export data, approve corrections, retrain, or activate a model.");
       els.feedbackToken?.focus();
       return null;
     }
