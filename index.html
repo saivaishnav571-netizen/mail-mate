@@ -59,6 +59,14 @@
         </nav>
 
         <div class="nav-actions">
+          <button class="nav-search" type="button" data-palette-open aria-label="Open quick jump">
+            <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+              <circle cx="9" cy="9" r="5.25" stroke="currentColor" stroke-width="1.6" />
+              <path d="m13 13 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+            </svg>
+            <span class="nav-search-label">Quick jump</span>
+            <kbd aria-hidden="true">⌘K</kbd>
+          </button>
           <a class="btn btn-primary btn-sm nav-cta" href="#demo">
             Open the inbox
             <span aria-hidden="true">→</span>
@@ -104,15 +112,15 @@
             </div>
             <dl class="hero-facts" aria-label="Demo facts">
               <div>
-                <dt>24</dt>
+                <dt data-count="26">26</dt>
                 <dd>demo messages</dd>
               </div>
               <div>
-                <dt>5</dt>
+                <dt data-count="5">5</dt>
                 <dd>sorting buckets</dd>
               </div>
               <div>
-                <dt>0</dt>
+                <dt data-count="0">0</dt>
                 <dd>sends without you</dd>
               </div>
             </dl>
@@ -146,7 +154,34 @@
               </button>
               <div class="scene-sheen" aria-hidden="true"></div>
             </div>
+
+            <div class="scene-feed" data-scene-feed aria-hidden="true">
+              <span class="scene-feed-status"><span class="live-dot"></span> Just sorted</span>
+              <span class="scene-feed-line">
+                <i class="scene-feed-cat" data-feed-cat></i>
+                <strong class="scene-feed-subject" data-feed-subject>Budget forecast: numbers due Friday</strong>
+                <span class="scene-feed-bucket" data-feed-bucket>Important</span>
+                <span class="scene-feed-confidence" data-feed-confidence>85%</span>
+              </span>
+            </div>
           </div>
+        </div>
+      </section>
+
+      <!-- Live triage ticker -->
+      <section class="ticker-band" aria-label="Recent triage activity">
+        <div class="wrap ticker-inner">
+          <p class="ticker-label">
+            <span class="ticker-pulse" aria-hidden="true"></span>
+            Live triage
+          </p>
+          <div class="ticker-mask">
+            <div class="ticker-track" data-ticker-track></div>
+          </div>
+          <a class="ticker-cta" href="#demo">
+            Watch it sort
+            <span aria-hidden="true">→</span>
+          </a>
         </div>
       </section>
 
@@ -539,6 +574,111 @@
         </div>
       </section>
 
+      <!-- Before / after -->
+      <section class="section compare-section" id="difference" aria-labelledby="difference-title">
+        <div class="wrap">
+          <div class="section-head section-head--split" data-reveal>
+            <div>
+              <p class="eyebrow">The difference</p>
+              <h2 id="difference-title">Same morning.<br />Two inboxes.</h2>
+            </div>
+            <div class="section-head-copy">
+              <p>
+                Nothing here is a mock-up of someone else’s mail.
+                <span class="compare-hint compare-hint--wide">
+                  Drag the divider and compare the raw test inbox with the same messages after one
+                  triage pass.
+                </span>
+                <span class="compare-hint compare-hint--narrow">
+                  Switch between the raw test inbox and the same 26 messages after one triage pass.
+                </span>
+              </p>
+              <p class="micro-note">
+                <span class="compare-legend"><i class="legend-dot legend-dot--before"></i>Untouched</span>
+                <span class="compare-legend"><i class="legend-dot legend-dot--after"></i>Triaged</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="compare" data-compare data-reveal>
+            <p class="visually-hidden" id="compare-summary">
+              Before triage, the demo inbox is one flat list of 26 messages with no order. After one
+              pass, the same messages sit in five buckets, sorted, with deadlines and actions pulled out.
+            </p>
+
+            <div class="compare-switch" data-compare-switch role="group" aria-label="Choose which inbox to show">
+              <button type="button" data-compare-view="before" aria-pressed="false">Before</button>
+              <button type="button" data-compare-view="after" aria-pressed="true">After</button>
+            </div>
+
+            <div class="compare-frame" data-compare-frame data-view="after" style="--split: 50%">
+              <div class="compare-panel compare-panel--before" aria-hidden="true">
+                <div class="compare-inner">
+                  <header class="compare-head">
+                    <span class="compare-tag">09:04 · before</span>
+                    <strong>26 unread</strong>
+                    <span class="compare-sub">One list. No order.</span>
+                  </header>
+                  <ul class="chaos-list">
+                    <li><span class="chaos-time">16:20</span><span class="chaos-from">Legal Ops</span><span class="chaos-subject">Sign the updated supplier contract</span></li>
+                    <li><span class="chaos-time">15:40</span><span class="chaos-from">BrightLayer Talent Team</span><span class="chaos-subject">Re: Interview invitation: Software Engineering</span></li>
+                    <li><span class="chaos-time">09:12</span><span class="chaos-from">Accounts Receivable</span><span class="chaos-subject">Invoice 1042 is overdue</span></li>
+                    <li><span class="chaos-time">07:42</span><span class="chaos-from">Priya Raman</span><span class="chaos-subject">Budget forecast: numbers due Friday</span></li>
+                    <li><span class="chaos-time">Yest.</span><span class="chaos-from">Café Norr</span><span class="chaos-subject">Table for two on Saturday?</span></li>
+                    <li><span class="chaos-time">Yest.</span><span class="chaos-from">Office Services</span><span class="chaos-subject">Printer 3 is offline again</span></li>
+                    <li><span class="chaos-time">03:14</span><span class="chaos-from">Unknown sender</span><span class="chaos-subject">You have been selected (open immediately)</span></li>
+                    <li class="chaos-more">+ 19 more, all in the same stack</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="compare-panel compare-panel--after" aria-hidden="true">
+                <div class="compare-inner">
+                  <header class="compare-head">
+                    <span class="compare-tag">09:06 · after</span>
+                    <strong>5 decisions</strong>
+                    <span class="compare-sub">21 drafts ready · 6 due soon</span>
+                  </header>
+                  <ul class="bucket-stack">
+                    <li class="bucket-row cat-important"><span class="bucket-name"><i></i>Important</span><span class="bucket-count">7</span><span class="bucket-sample">Budget forecast · Invoice 1042</span></li>
+                    <li class="bucket-row cat-academic"><span class="bucket-name"><i></i>Academic</span><span class="bucket-count">4</span><span class="bucket-sample">Lecture notes · Seminar reading</span></li>
+                    <li class="bucket-row cat-internship"><span class="bucket-name"><i></i>Internship</span><span class="bucket-count">6</span><span class="bucket-sample">Interview slot · Availability</span></li>
+                    <li class="bucket-row cat-personal"><span class="bucket-name"><i></i>Personal</span><span class="bucket-count">4</span><span class="bucket-sample">Café Norr · Saturday plans</span></li>
+                    <li class="bucket-row cat-spam"><span class="bucket-name"><i></i>Spam</span><span class="bucket-count">5</span><span class="bucket-sample">Wire transfer · Prize notice</span></li>
+                  </ul>
+                  <p class="bucket-foot"><span class="tick">✓</span> Sorted on this device · 0 sends</p>
+                </div>
+              </div>
+
+              <button
+                class="compare-handle"
+                type="button"
+                data-compare-handle
+                role="slider"
+                aria-label="Compare the inbox before and after triage"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="50"
+                aria-valuetext="Half before, half after"
+                aria-describedby="compare-summary"
+              >
+                <span class="compare-handle-line"></span>
+                <span class="compare-grip" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="m9 7-4 5 4 5M15 7l4 5-4 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+              </button>
+            </div>
+
+            <div class="compare-foot">
+              <p>Drag the handle, or focus it and use the arrow keys.</p>
+              <button class="text-link" type="button" data-compare-reset>Reset the divider</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- How it works -->
       <section class="section how-section" id="how" aria-labelledby="how-title">
         <div class="wrap">
@@ -552,6 +692,15 @@
                 No black box and no mailbox takeover. Each stage does one job, keeps its output
                 visible, and hands the message to the next stage.
               </p>
+              <button
+                class="btn btn-quiet btn-sm pipeline-play"
+                type="button"
+                data-pipeline-play
+                aria-pressed="false"
+              >
+                <span class="play-glyph" aria-hidden="true">▶</span>
+                <span data-pipeline-play-label>Play the pipeline</span>
+              </button>
             </div>
           </div>
 
@@ -941,6 +1090,38 @@
         </div>
       </section>
 
+      <!-- Honest numbers -->
+      <section class="metrics-band" aria-labelledby="metrics-title">
+        <div class="wrap">
+          <div class="metrics-head">
+            <p class="eyebrow eyebrow--light" id="metrics-title">Measured, not claimed</p>
+            <p class="metrics-note">Computed in this tab when the page loads.</p>
+          </div>
+          <dl class="metrics-grid">
+            <div>
+              <dt><span data-count="94" data-metric="accuracy">94</span><em>%</em></dt>
+              <dd>holdout accuracy</dd>
+              <p>5-fold cross-validation on the bundled examples.</p>
+            </div>
+            <div>
+              <dt><span data-count="125" data-metric="samples">125</span></dt>
+              <dd>labelled examples</dd>
+              <p>Shipped with the page, not fetched from a server.</p>
+            </div>
+            <div>
+              <dt><span data-count="384" data-metric="vocab">384</span></dt>
+              <dd>vocabulary terms</dd>
+              <p>Built by TF-IDF from the training set at runtime.</p>
+            </div>
+            <div>
+              <dt><span data-count="0">0</span></dt>
+              <dd>network requests</dd>
+              <p>The classifier, search and summaries all stay local.</p>
+            </div>
+          </dl>
+        </div>
+      </section>
+
       <!-- Approval -->
       <section class="section approval-section" id="approval" aria-labelledby="approval-title">
         <div class="wrap approval-grid">
@@ -995,15 +1176,17 @@
                 <p>Best,<br />Alex</p>
               </div>
               <div class="slip-rule"></div>
-              <div class="slip-check">
-                <span class="slip-check-box" aria-hidden="true">✓</span>
-                <span>Recipient and draft checked by you</span>
+              <div class="slip-verify">
+                <div class="slip-check">
+                  <span class="slip-check-box" aria-hidden="true">✓</span>
+                  <span>Recipient and draft<br />checked by you</span>
+                </div>
+                <span class="approval-stamp" aria-hidden="true">Approved</span>
               </div>
               <div class="slip-foot">
                 <span class="slip-sim">Simulated send</span>
                 <span class="slip-time">15 Nov · 09:12</span>
               </div>
-              <span class="approval-stamp" aria-hidden="true">Approved</span>
             </div>
           </div>
         </div>
@@ -1045,6 +1228,11 @@
                 <p class="drop-title">Drop a JSON or CSV file</p>
                 <p class="drop-sub">or <span class="drop-link">choose a file</span></p>
                 <p class="drop-hint" id="drop-hint">Up to 2 MB · up to 300 messages · stays on this device</p>
+                <ol class="drop-steps">
+                  <li><span>01</span>Drop the file</li>
+                  <li><span>02</span>Parse locally</li>
+                  <li><span>03</span>Sort in place</li>
+                </ol>
               </div>
               <input
                 type="file"
@@ -1664,6 +1852,44 @@
           <button class="btn btn-primary" type="button" data-reset-confirm>Reset demo</button>
         </div>
         <p class="modal-note">Nothing outside this page is deleted. Uploaded files are not kept.</p>
+      </div>
+    </dialog>
+
+    <nav class="section-rail" aria-label="Section progress" data-section-rail>
+      <a href="#top" data-rail="top"><span class="rail-dot"></span><span class="rail-label">Start</span></a>
+      <a href="#demo" data-rail="demo"><span class="rail-dot"></span><span class="rail-label">Live inbox</span></a>
+      <a href="#difference" data-rail="difference"><span class="rail-dot"></span><span class="rail-label">Difference</span></a>
+      <a href="#how" data-rail="how"><span class="rail-dot"></span><span class="rail-label">Pipeline</span></a>
+      <a href="#ai" data-rail="ai"><span class="rail-dot"></span><span class="rail-label">AI model</span></a>
+      <a href="#approval" data-rail="approval"><span class="rail-dot"></span><span class="rail-label">Approval</span></a>
+      <a href="#data" data-rail="data"><span class="rail-dot"></span><span class="rail-label">Data</span></a>
+      <a href="#faq" data-rail="faq"><span class="rail-dot"></span><span class="rail-label">FAQ</span></a>
+    </nav>
+
+    <dialog class="palette" id="palette-dialog" aria-labelledby="palette-title">
+      <div class="palette-inner">
+        <div class="palette-search">
+          <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+            <circle cx="9" cy="9" r="5.25" stroke="currentColor" stroke-width="1.6" />
+            <path d="m13 13 4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Jump to a section or run an action…"
+            aria-label="Search commands"
+            autocomplete="off"
+            data-palette-input
+          />
+          <kbd aria-hidden="true">Esc</kbd>
+        </div>
+        <p class="palette-title" id="palette-title">Sections &amp; actions</p>
+        <ul class="palette-list" role="listbox" aria-label="Commands" data-palette-list></ul>
+        <p class="palette-empty" data-palette-empty hidden>No match. Try “inbox”, “AI” or “upload”.</p>
+        <div class="palette-foot">
+          <span><kbd>↑</kbd><kbd>↓</kbd> move</span>
+          <span><kbd>↵</kbd> run</span>
+          <span class="palette-foot-note">26 demo messages · on-device</span>
+        </div>
       </div>
     </dialog>
 

@@ -11,6 +11,7 @@ try {
 
 import { createHeroScene } from "./hero/three-scene.js";
 import { initMotion } from "./lib/motion.js";
+import { initInteractions } from "./lib/interactions.js";
 import { initInboxDemo } from "./ui/inbox-demo.js";
 import { initIntelligenceCenter } from "./ui/intelligence.js";
 import { MODEL_INFO, classifyText } from "./lib/ai.js";
@@ -286,3 +287,9 @@ const inbox = initInboxDemo(document.querySelector("[data-demo]"));
 initIntelligenceCenter({
   getAnalyticsSnapshot: inbox?.getAnalyticsSnapshot
 });
+
+/* ------------------------------------------------------------------ */
+/*  Interaction layer: quick jump, live feed, compare, walkthrough     */
+/* ------------------------------------------------------------------ */
+
+initInteractions();
