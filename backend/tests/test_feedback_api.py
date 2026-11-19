@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import csv
+import io
+
 ADMIN_TOKEN = "test-admin-token-0123456789abcdef0123456789abcdef"
 
 
@@ -188,8 +191,9 @@ def test_csv_export_neutralizes_formula_cells(client):
         headers={"X-Admin-Token": ADMIN_TOKEN},
     )
     assert exported.status_code == 200
-    assert "'=HYPERLINK" in exported.text
-    assert " =HYPERLINK" not in exported.text
+    rows = list(csv.reader(io.StringIO(exported.text)))
+    assert rows[1][1].startswith("'")
+    assert rows[1][2].startswith("'")
 
 
 def test_empty_analytics_does_not_divide_by_zero(client):
