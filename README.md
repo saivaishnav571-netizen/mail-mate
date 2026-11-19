@@ -82,10 +82,10 @@ Endpoints:
 | --- | --- | --- |
 | `GET` | `/api/health` | Service status, active model and feedback count |
 | `POST` | `/api/feedback` | Save correct/incorrect feedback |
-| `GET` | `/api/feedback` | List recent feedback |
+| `GET` | `/api/feedback` | List recent feedback (admin) |
 | `POST` | `/api/feedback/{id}/approve` | Approve one row for training (admin) |
 | `GET` | `/api/analytics` | Feedback analytics plus separate model metrics |
-| `GET` | `/api/feedback/export` | Download approved feedback as CSV |
+| `GET` | `/api/feedback/export` | Download feedback as CSV (admin) |
 | `GET` | `/api/model/current` | Active model version |
 | `GET` | `/api/model/versions` | Model version history |
 | `POST` | `/api/model/retrain` | Train an inactive candidate from approved feedback (admin) |
