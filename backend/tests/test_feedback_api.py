@@ -192,8 +192,8 @@ def test_csv_export_neutralizes_formula_cells(client):
     )
     assert exported.status_code == 200
     rows = list(csv.reader(io.StringIO(exported.text)))
-    assert rows[1][1].startswith("'")
-    assert rows[1][2].startswith("'")
+    assert rows[1][1].startswith("'=")
+    assert rows[1][2].startswith("'=")
 
 
 def test_empty_analytics_does_not_divide_by_zero(client):
