@@ -33,6 +33,15 @@ def test_runtime_rejects_non_origin_cors_values():
         settings.validate_runtime()
 
 
+def test_runtime_requires_https_for_non_local_origins():
+    settings = Settings(
+        admin_token="a" * 32,
+        allowed_origins=("http://mailmate.example.com",),
+    )
+    with pytest.raises(RuntimeError, match="must use HTTPS"):
+        settings.validate_runtime()
+
+
 def test_runtime_accepts_valid_settings():
     settings = Settings(
         admin_token="a" * 32,
