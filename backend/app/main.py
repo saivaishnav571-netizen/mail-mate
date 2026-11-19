@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import csv
 import hashlib
+from collections import deque
 import io
 import json
 import math
@@ -22,6 +23,7 @@ from typing import Iterator
 
 import joblib
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select, update
 from sqlalchemy.exc import IntegrityError
@@ -576,9 +578,38 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=list(settings.allowed_origins),
         allow_credentials=False,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "OPTIONS"],
+        allow_headers=["Accept", "Content-Type", "X-Admin-Token"],
     )
+
+    # A small per-process safety net for public write/prediction routes.
+    # Production deployments should also enforce shared limits at the edge.
+    rate_buckets: dict[tuple[str, str], deque[float]] = {}
+    rate_limits = {
+        "/api/feedback": 30,
+        "/api/emails/analyze": 15,
+        "/api/model/predict": 60,
+    }
+
+    @app.middleware("http")
+    async def limit_public_api_requests(request: Request, call_next):
+        limit = rate_limits.get(request.url.path) if request.method == "POST" else None
+        if limit is not None:
+            client_host = request.client.host if request.client else "unknown"
+            key = (client_host, request.url.path)
+            now = time.monotonic()
+            bucket = rate_buckets.setdefault(key, deque())
+            while bucket and now - bucket[0] >= 60:
+                bucket.popleft()
+            if len(bucket) >= limit:
+                retry_after = max(1, int(60 - (now - bucket[0])))
+                return JSONResponse(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    content={"detail": "Too many requests. Please try again shortly."},
+                    headers={"Retry-After": str(retry_after), "Cache-Control": "no-store"},
+                )
+            bucket.append(now)
+        return await call_next(request)
 
     @app.middleware("http")
     async def no_store_api_responses(request: Request, call_next):
