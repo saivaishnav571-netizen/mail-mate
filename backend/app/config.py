@@ -69,6 +69,14 @@ class Settings:
                 raise RuntimeError(
                     f"Invalid CORS origin {origin!r}; use an exact http(s) origin."
                 )
+            if parsed.scheme == "http" and parsed.hostname not in {
+                "localhost",
+                "127.0.0.1",
+                "::1",
+            }:
+                raise RuntimeError(
+                    "Non-local CORS origins must use HTTPS to protect admin tokens."
+                )
 
     @property
     def model_dir(self) -> Path:
