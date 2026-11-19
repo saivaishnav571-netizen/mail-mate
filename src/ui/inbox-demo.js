@@ -1004,9 +1004,12 @@ export function initInboxDemo(root) {
     if (!els.feedbackStats) return;
     const adminToken = getAdminToken();
     if (!adminToken) {
+      els.feedbackStats.replaceChildren();
+      els.feedbackCategories.replaceChildren();
+      els.feedbackList.replaceChildren();
+      els.feedbackModels.replaceChildren();
       els.feedbackModel.textContent = "Enter the admin token to view private feedback records.";
       els.feedbackApproved.textContent = "Locked";
-      els.feedbackList.replaceChildren();
       return;
     }
     els.feedbackStats.replaceChildren();
@@ -1185,23 +1188,27 @@ export function initInboxDemo(root) {
         })
       );
     } catch (error) {
-      state.feedbackOffline = true;
+      const unauthorized = error?.status === 401;
+      state.feedbackOffline = !unauthorized;
       const currentEmail = selectedEmail();
       if (currentEmail) renderFeedback(currentEmail);
       const offline = document.createElement("div");
       offline.className = "brief-stat";
       const value = document.createElement("strong");
-      value.textContent = "Offline";
+      value.textContent = unauthorized ? "Access denied" : "Offline";
       const label = document.createElement("span");
-      label.textContent = "Start the FastAPI backend to load feedback";
+      label.textContent = unauthorized
+        ? "The admin token was rejected. Check the token configured on the backend."
+        : "Start the FastAPI backend to load feedback";
       offline.append(value, label);
       els.feedbackStats.replaceChildren(offline);
       els.feedbackModel.textContent = error.message;
       els.feedbackApproved.textContent = "Unavailable";
       const empty = document.createElement("li");
       empty.className = "feedback-empty";
-      empty.textContent =
-        "No analytics are shown because the local service is not reachable. Nothing is fabricated.";
+      empty.textContent = unauthorized
+        ? "Private feedback records remain hidden until a valid admin token is supplied."
+        : "No analytics are shown because the local service is not reachable. Nothing is fabricated.";
       els.feedbackCategories.replaceChildren(empty);
       els.feedbackList.replaceChildren(empty.cloneNode(true));
       els.feedbackModels.replaceChildren(empty.cloneNode(true));
