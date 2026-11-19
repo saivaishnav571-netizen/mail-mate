@@ -279,11 +279,13 @@ export function buildThreads(emails, { reference = new Date(), summarize } = {})
     groups.get(key).push(email);
   }
 
+  let fallbackIndex = 0;
   for (const cluster of clusterBySubject(withoutThreadId)) {
     if (cluster.length > 1) {
       const firstId = String(cluster[0].id ?? "unknown");
-      const key = `fallback:${normalizeSubject(cluster[0].subject)}:${firstId}`;
+      const key = `fallback:${normalizeSubject(cluster[0].subject)}:${firstId}:${fallbackIndex}`;
       groups.set(key, cluster);
+      fallbackIndex += 1;
     }
   }
 
