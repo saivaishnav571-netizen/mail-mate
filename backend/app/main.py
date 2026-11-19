@@ -436,7 +436,9 @@ def _safe_csv_cell(value: str | None) -> str:
     text_value = "" if value is None else str(value)
     probe = text_value.lstrip(" \t\r\n")
     if probe.startswith(("=", "+", "-", "@")):
-        return "'" + text_value
+        # Put the apostrophe in the first position so spreadsheet programs
+        # cannot ignore leading whitespace before interpreting a formula.
+        return "'" + probe
     return text_value
 
 
