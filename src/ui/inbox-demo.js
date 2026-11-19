@@ -965,16 +965,17 @@ export function initInboxDemo(root) {
       return;
     }
     try {
-      const [health, analytics, rows] = await Promise.all([
-        fetchHealth(),
-        fetchAnalytics(),
-        fetchFeedback({ limit: 500 })
-      ]);
+      const [health, analytics] = await Promise.all([fetchHealth(), fetchAnalytics()]);
       state.feedbackOffline = false;
       state.modelVersion = health.active_model;
       state.feedbackTotal = analytics.total_feedback;
       if (els.feedbackTotal) els.feedbackTotal.textContent = String(state.feedbackTotal);
-      if (!state.feedbackHydrated) {
+
+      // Stored feedback contains email identifiers and subjects. Only fetch it
+      // after an administrator has entered the private dashboard token.
+      const adminToken = els.feedbackToken?.value.trim();
+      if (!state.feedbackHydrated && adminToken) {
+        const rows = await fetchFeedback({ limit: 500, adminToken });
         applyStoredFeedback(rows);
         state.feedbackHydrated = true;
       }
@@ -1001,6 +1002,13 @@ export function initInboxDemo(root) {
 
   async function renderFeedbackDashboard() {
     if (!els.feedbackStats) return;
+    const adminToken = getAdminToken();
+    if (!adminToken) {
+      els.feedbackModel.textContent = "Enter the admin token to view private feedback records.";
+      els.feedbackApproved.textContent = "Locked";
+      els.feedbackList.replaceChildren();
+      return;
+    }
     els.feedbackStats.replaceChildren();
     els.feedbackCategories.replaceChildren();
     els.feedbackList.replaceChildren();
@@ -1014,13 +1022,17 @@ export function initInboxDemo(root) {
     try {
       const [analytics, recent, versions] = await Promise.all([
         fetchAnalytics(),
-        fetchFeedback({ limit: 25 }),
+        fetchFeedback({ limit: 25, adminToken }),
         fetchModelVersions()
       ]);
 
       state.feedbackOffline = false;
       state.feedbackTotal = analytics.total_feedback;
       if (els.feedbackTotal) els.feedbackTotal.textContent = String(state.feedbackTotal);
+      if (!state.feedbackHydrated) {
+        applyStoredFeedback(recent);
+        state.feedbackHydrated = true;
+      }
 
       const currentEmail = selectedEmail();
       if (currentEmail) renderFeedback(currentEmail);
@@ -1783,8 +1795,10 @@ export function initInboxDemo(root) {
   });
 
   els.feedbackExport?.addEventListener("click", async () => {
+    const token = getAdminToken();
+    if (!token) return;
     try {
-      const { blob, filename } = await exportFeedbackCsv({ approvedOnly: true });
+      const { blob, filename } = await exportFeedbackCsv({ approvedOnly: true, adminToken: token });
       downloadBlob(blob, filename);
       toast("Approved feedback exported as CSV.");
     } catch (error) {
@@ -1793,8 +1807,10 @@ export function initInboxDemo(root) {
   });
 
   els.feedbackExportAll?.addEventListener("click", async () => {
+    const token = getAdminToken();
+    if (!token) return;
     try {
-      const { blob, filename } = await exportFeedbackCsv({ approvedOnly: false });
+      const { blob, filename } = await exportFeedbackCsv({ approvedOnly: false, adminToken: token });
       downloadBlob(blob, filename);
       toast("All feedback exported as CSV.");
     } catch (error) {
