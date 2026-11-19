@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-ADMIN_TOKEN = "test-admin-token"
+ADMIN_TOKEN = "test-admin-token-0123456789abcdef0123456789abcdef"
 
 
 def feedback_payload(
@@ -132,10 +132,14 @@ def test_analytics_reports_user_agreement_not_model_accuracy(client):
 
 
 def test_api_responses_are_never_cached(client):
-    for path in ("/api/health", "/api/analytics", "/api/feedback"):
+    for path in ("/api/health", "/api/analytics"):
         response = client.get(path)
         assert response.status_code == 200
         assert response.headers["cache-control"] == "no-store"
+
+    private_response = client.get("/api/feedback", headers={"X-Admin-Token": ADMIN_TOKEN})
+    assert private_response.status_code == 200
+    assert private_response.headers["cache-control"] == "no-store"
 
 
 def test_empty_analytics_does_not_divide_by_zero(client):
@@ -171,7 +175,11 @@ def test_csv_export_defaults_to_approved_feedback(client):
         headers={"X-Admin-Token": ADMIN_TOKEN},
     )
 
-    approved_csv = client.get("/api/feedback/export")
+    unauthorized_csv = client.get("/api/feedback/export")
+    assert unauthorized_csv.status_code == 401
+
+    admin_headers = {"X-Admin-Token": ADMIN_TOKEN}
+    approved_csv = client.get("/api/feedback/export", headers=admin_headers)
     assert approved_csv.status_code == 200
     assert approved_csv.headers["content-type"].startswith("text/csv")
     assert "attachment;" in approved_csv.headers["content-disposition"]
@@ -180,7 +188,11 @@ def test_csv_export_defaults_to_approved_feedback(client):
     assert "approved-email" in text
     assert "unapproved-email" not in text
 
-    all_csv = client.get("/api/feedback/export", params={"approved_only": "false"})
+    all_csv = client.get(
+        "/api/feedback/export",
+        params={"approved_only": "false"},
+        headers=admin_headers,
+    )
     assert "approved-email" in all_csv.text
     assert "unapproved-email" in all_csv.text
 
@@ -220,7 +232,9 @@ def test_retraining_is_admin_only_and_uses_only_approved_feedback(client):
 
 def test_model_activation_preserves_version_history(client):
     post_feedback(client, email_id="retrain-1", feedback_type="incorrect", corrected="academic")
-    feedback_id = client.get("/api/feedback").json()[0]["id"]
+    feedback_id = client.get(
+        "/api/feedback", headers={"X-Admin-Token": ADMIN_TOKEN}
+    ).json()[0]["id"]
     client.post(
         f"/api/feedback/{feedback_id}/approve",
         headers={"X-Admin-Token": ADMIN_TOKEN},
