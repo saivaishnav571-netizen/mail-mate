@@ -897,7 +897,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     row.predicted_category,
                     row.corrected_category,
                     f"{row.original_confidence:.4f}",
-                    row.model_version,
+                    _safe_csv_cell(row.model_version),
                     row.feedback_type,
                     str(row.approved_for_training).lower(),
                     row.created_at.isoformat(),
