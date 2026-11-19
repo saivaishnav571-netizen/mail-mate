@@ -541,6 +541,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        settings.validate_runtime()
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         engine = make_engine(settings.database_url)
         app.state.engine = engine
@@ -562,12 +563,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://127.0.0.1:5173",
-            "http://localhost:5173",
-            "http://127.0.0.1:4173",
-            "http://localhost:4173",
-        ],
+        allow_origins=list(settings.allowed_origins),
         allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
