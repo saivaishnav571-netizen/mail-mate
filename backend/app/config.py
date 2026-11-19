@@ -17,9 +17,18 @@ def _env_path(name: str, default: Path) -> Path:
     return Path(value).expanduser().resolve() if value else default
 
 
+def _env_origins() -> tuple[str, ...]:
+    raw = os.getenv(
+        "MAILMATE_ALLOWED_ORIGINS",
+        "http://127.0.0.1:5173,http://localhost:5173,"
+        "http://127.0.0.1:4173,http://localhost:4173",
+    )
+    return tuple(origin.strip().rstrip("/") for origin in raw.split(",") if origin.strip())
+
+
 @dataclass(frozen=True)
 class Settings:
-    """All paths and secrets are injectable so tests never touch real data."""
+    """All paths, secrets, and origins are injectable so tests stay isolated."""
 
     database_url: str = field(
         default_factory=lambda: os.getenv(
@@ -29,12 +38,24 @@ class Settings:
     data_dir: Path = field(
         default_factory=lambda: _env_path("MAILMATE_DATA_DIR", DEFAULT_DATA_DIR)
     )
-    admin_token: str = field(
-        default_factory=lambda: os.getenv("MAILMATE_ADMIN_TOKEN", "mailmate-admin-dev")
+    admin_token: str | None = field(
+        default_factory=lambda: os.getenv("MAILMATE_ADMIN_TOKEN")
     )
     seed_path: Path = field(
         default_factory=lambda: _env_path("MAILMATE_SEED_PATH", DEFAULT_SEED_PATH)
     )
+    allowed_origins: tuple[str, ...] = field(default_factory=_env_origins)
+
+    def validate_runtime(self) -> None:
+        """Fail closed when the API is started without production-safe settings."""
+        if not self.admin_token or len(self.admin_token) < 32:
+            raise RuntimeError(
+                "MAILMATE_ADMIN_TOKEN must be set and contain at least 32 characters."
+            )
+        if not self.allowed_origins:
+            raise RuntimeError("MAILMATE_ALLOWED_ORIGINS must contain at least one origin.")
+        if "*" in self.allowed_origins:
+            raise RuntimeError("Wildcard CORS origins are not allowed.")
 
     @property
     def model_dir(self) -> Path:
