@@ -81,7 +81,8 @@ DISCLOSURES = [
     "Confidence is the model's probability for the label it chose. It is not a guarantee that the label is correct.",
     "User agreement is a human review signal (correct feedback / total feedback). It is not model accuracy.",
     "Model comparison trains the three candidate algorithms on the same split for evaluation only. No candidate is activated automatically.",
-    "Email analytics stores aggregate metadata only. Subjects and message bodies are never sent.",
+    "Email analytics stores aggregate metadata only; subjects and message bodies are not included in analytics events.",
+    "Submitting feedback sends the selected message ID, subject, and body to the configured feedback API. Stored feedback records are admin-only, and message text is used for training only after explicit approval.",
 ]
 
 
