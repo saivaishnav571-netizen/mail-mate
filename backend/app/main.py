@@ -13,6 +13,7 @@ import io
 import json
 import math
 import re
+import secrets
 import time
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
@@ -23,6 +24,7 @@ import joblib
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import func, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .config import Settings
@@ -589,7 +591,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request: Request,
         x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     ) -> None:
-        if x_admin_token != request.app.state.settings.admin_token:
+        if not secrets.compare_digest(
+            x_admin_token or "", request.app.state.settings.admin_token or ""
+        ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="A valid X-Admin-Token header is required.",
@@ -645,6 +649,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def list_feedback(
         limit: int = 50,
         approved_only: bool = False,
+        _: None = Depends(require_admin),
         session: Session = Depends(get_db),
     ) -> list[FeedbackOut]:
         limit = max(1, min(limit, 500))
@@ -721,30 +726,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if key in seen:
                 duplicates += 1
                 continue
-            exists = session.scalar(
-                select(EmailAnalysisEvent.id).where(EmailAnalysisEvent.batch_key == key)
-            )
-            if exists:
-                duplicates += 1
-                continue
             seen.add(key)
-            session.add(
-                EmailAnalysisEvent(
-                    batch_key=key,
-                    email_id=message.email_id,
-                    category=message.category,
-                    confidence=float(message.confidence),
-                    model_confidence=(
-                        float(message.model_confidence)
-                        if message.model_confidence is not None
-                        else None
-                    ),
-                    priority=int(message.priority),
-                    dataset=payload.dataset,
-                    received_at=message.received_at,
-                )
+            event = EmailAnalysisEvent(
+                batch_key=key,
+                email_id=message.email_id,
+                category=message.category,
+                confidence=float(message.confidence),
+                model_confidence=(
+                    float(message.model_confidence)
+                    if message.model_confidence is not None
+                    else None
+                ),
+                priority=int(message.priority),
+                dataset=payload.dataset,
+                received_at=message.received_at,
             )
-            stored += 1
+            # The unique constraint is the concurrency-safe source of truth.
+            # A savepoint lets duplicate inserts be counted without aborting
+            # the rest of this batch transaction.
+            try:
+                with session.begin_nested():
+                    session.add(event)
+                    session.flush()
+                stored += 1
+            except IntegrityError:
+                duplicates += 1
 
         if stored:
             session.commit()
@@ -814,6 +820,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/feedback/export")
     def export_feedback(
         approved_only: bool = True,
+        _: None = Depends(require_admin),
         session: Session = Depends(get_db),
     ) -> Response:
         query = select(Feedback).order_by(Feedback.created_at.asc(), Feedback.id.asc())
