@@ -15,7 +15,7 @@ if str(ROOT) not in sys.path:
 from backend.app.config import Settings  # noqa: E402
 from backend.app.main import create_app  # noqa: E402
 
-ADMIN_TOKEN = "test-admin-token"
+ADMIN_TOKEN = "test-admin-token-0123456789abcdef0123456789abcdef"
 SEED_PATH = Path(__file__).resolve().parents[1] / "app" / "seed_data.json"
 
 
