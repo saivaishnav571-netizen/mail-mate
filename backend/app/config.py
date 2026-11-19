@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlsplit
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 DEFAULT_DATA_DIR = BACKEND_DIR / "data"
@@ -54,8 +55,20 @@ class Settings:
             )
         if not self.allowed_origins:
             raise RuntimeError("MAILMATE_ALLOWED_ORIGINS must contain at least one origin.")
-        if "*" in self.allowed_origins:
+        if any("*" in origin for origin in self.allowed_origins):
             raise RuntimeError("Wildcard CORS origins are not allowed.")
+        for origin in self.allowed_origins:
+            parsed = urlsplit(origin)
+            if (
+                parsed.scheme not in {"http", "https"}
+                or not parsed.netloc
+                or parsed.path not in {"", "/"}
+                or parsed.query
+                or parsed.fragment
+            ):
+                raise RuntimeError(
+                    f"Invalid CORS origin {origin!r}; use an exact http(s) origin."
+                )
 
     @property
     def model_dir(self) -> Path:
