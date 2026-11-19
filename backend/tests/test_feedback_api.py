@@ -184,6 +184,7 @@ def test_csv_export_neutralizes_formula_cells(client):
     assert response.status_code == 201
     exported = client.get(
         "/api/feedback/export",
+        params={"approved_only": "false"},
         headers={"X-Admin-Token": ADMIN_TOKEN},
     )
     assert exported.status_code == 200
