@@ -60,9 +60,21 @@ python -m pip install -r backend/requirements.txt
 npm run api
 ```
 
-The API listens on `http://127.0.0.1:8000`. The Vite dev server proxies `/api` to it, so `npm run dev` plus `npm run api` is all you need. The database and model artifacts are created under `backend/data/` and are git-ignored.
+The API listens on `http://127.0.0.1:8000`. The Vite dev server proxies `/api` to it, so run `npm run dev` plus `npm run api`. The database and model artifacts are created under `backend/data/` and are git-ignored.
 
-Admin actions use an `X-Admin-Token` header. The development default is `mailmate-admin-dev`; set `MAILMATE_ADMIN_TOKEN` to change it. The dashboard's token field is only used for approval, retraining and activation.
+Before starting the API, configure a strong admin token (at least 32 characters). For PowerShell:
+
+```powershell
+$env:MAILMATE_ADMIN_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(48))"
+$env:MAILMATE_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"
+npm run api
+```
+
+For deployed environments, set `MAILMATE_ADMIN_TOKEN` and `MAILMATE_ALLOWED_ORIGINS` in the host's environment settings. Origins are a comma-separated list of exact frontend origins; wildcard CORS is rejected.
+
+Admin actions use an `X-Admin-Token` header. The dashboard's token field is used for private feedback review, CSV export, approval, retraining and activation. The API refuses to start if the admin token is missing or too short. Feedback record listing and CSV export require admin authentication. Public feedback submission remains enabled for the demo.
+
+The API applies per-process request throttles to public feedback submission (30/minute), inbox metadata ingestion (15/minute), and prediction (60/minute). This is a defence-in-depth limit for a single API process; configure equivalent shared rate limits at your hosting edge or reverse proxy for multi-worker deployments.
 
 Endpoints:
 
