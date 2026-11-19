@@ -39,26 +39,42 @@ function intersects(a, b) {
 
 function clusterBySubject(emails) {
   const bySubject = new Map();
+  const unthreaded = [];
   for (const email of emails) {
     const key = normalizeSubject(email.subject);
+    // Empty subjects are too ambiguous to serve as a conversation key.
+    if (!key) {
+      unthreaded.push([email]);
+      continue;
+    }
     if (!bySubject.has(key)) bySubject.set(key, []);
     bySubject.get(key).push(email);
   }
 
-  const clusters = [];
+  const clusters = [...unthreaded];
+  const fallbackWindowMs = 30 * 24 * 60 * 60 * 1000;
   for (const group of bySubject.values()) {
     const pending = [...group];
     while (pending.length) {
       const cluster = [pending.shift()];
+      let earliest = cluster[0].receivedAt?.getTime?.() ?? 0;
+      let latest = earliest;
       let changed = true;
       while (changed) {
         changed = false;
         for (let index = pending.length - 1; index >= 0; index -= 1) {
           const candidate = pending[index];
+          const timestamp = candidate.receivedAt?.getTime?.() ?? 0;
+          const nextEarliest = Math.min(earliest, timestamp);
+          const nextLatest = Math.max(latest, timestamp);
+          if (nextLatest - nextEarliest > fallbackWindowMs) continue;
+
           const candidateParticipants = participantKey(candidate);
           if (cluster.some((member) => intersects(participantKey(member), candidateParticipants))) {
             cluster.push(candidate);
             pending.splice(index, 1);
+            earliest = nextEarliest;
+            latest = nextLatest;
             changed = true;
           }
         }
@@ -264,7 +280,11 @@ export function buildThreads(emails, { reference = new Date(), summarize } = {})
   }
 
   for (const cluster of clusterBySubject(withoutThreadId)) {
-    if (cluster.length > 1) groups.set(`subject:${normalizeSubject(cluster[0].subject)}`, cluster);
+    if (cluster.length > 1) {
+      const firstId = String(cluster[0].id ?? "unknown");
+      const key = `fallback:${normalizeSubject(cluster[0].subject)}:${firstId}`;
+      groups.set(key, cluster);
+    }
   }
 
   const threads = [...groups.entries()].map(([id, messages]) => {
