@@ -632,7 +632,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         x_admin_token: str | None = Header(default=None, alias="X-Admin-Token"),
     ) -> None:
         if not secrets.compare_digest(
-            x_admin_token or "", request.app.state.settings.admin_token or ""
+            (x_admin_token or "").encode("utf-8"),
+            (request.app.state.settings.admin_token or "").encode("utf-8"),
         ):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
