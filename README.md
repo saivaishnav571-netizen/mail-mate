@@ -2,7 +2,7 @@
 
 MailMate is an interactive email-triage demo built with Three.js, vanilla JavaScript, and Vite. It sorts a 26-message test inbox into five buckets, extracts deadlines and next actions, drafts replies, and requires explicit human approval before simulating a send.
 
-**Triage runs in the browser.** There is no mailbox connection and no network uploads. Classification, search, summaries and replies run locally. An optional local FastAPI service stores human feedback in SQLite and handles manual retraining; when it is not running, the triage demo still works and feedback reports that the service is offline instead of pretending to save.
+**Triage runs in the browser.** MailMate does not connect to a mailbox or automatically upload inbox contents. Classification, search, summaries and replies run locally. When you explicitly submit a classification feedback action and a FastAPI service is configured, that request sends the selected email ID, subject, and body to the feedback service. The service stores feedback in SQLite; approved feedback text can then be used for manual retraining. Inbox analytics submissions are separate and contain only aggregate metadata, not subjects or message bodies.
 
 ## What it does
 
@@ -40,7 +40,7 @@ Open the **AI** section in the page to inspect the model card, live cross-valida
 
 ## Human-in-the-loop feedback
 
-Each classified message has two feedback actions: **Correct prediction** and **Incorrect prediction**. Choosing the incorrect one asks for the right bucket (Important, Academic, Internship, Personal, or Spam). Feedback stores the email ID and subject, the original prediction, the corrected category, the original confidence, the model version, and a timestamp.
+Each classified message has two feedback actions: **Correct prediction** and **Incorrect prediction**. Choosing the incorrect one asks for the right bucket (Important, Academic, Internship, Personal, or Spam). Submitting either action sends the email ID, subject, and body to the configured feedback API, together with the original prediction, corrected category, confidence, model version, and timestamp. Feedback records are visible only to an administrator with the configured admin token. Message text is eligible for retraining only after an administrator explicitly approves that feedback row.
 
 The **Feedback** button in the app bar opens the analytics dashboard: total submissions, corrected predictions, user agreement rate, most-corrected categories, recent feedback, CSV export, manual retraining, and model version history.
 
