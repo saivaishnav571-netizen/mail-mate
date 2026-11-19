@@ -142,6 +142,34 @@ def test_api_responses_are_never_cached(client):
     assert private_response.headers["cache-control"] == "no-store"
 
 
+def test_feedback_list_requires_admin(client):
+    post_feedback(client, email_id="private-record")
+    unauthorized = client.get("/api/feedback")
+    assert unauthorized.status_code == 401
+
+    authorized = client.get("/api/feedback", headers={"X-Admin-Token": ADMIN_TOKEN})
+    assert authorized.status_code == 200
+    assert authorized.json()[0]["email_id"] == "private-record"
+
+
+def test_csv_export_neutralizes_formula_cells(client):
+    response = client.post(
+        "/api/feedback",
+        json={
+            **feedback_payload(email_id="=HYPERLINK(\"https://bad.example\")"),
+            "email_subject": " =HYPERLINK(\"https://bad.example\")",
+        },
+    )
+    assert response.status_code == 201
+    exported = client.get(
+        "/api/feedback/export",
+        headers={"X-Admin-Token": ADMIN_TOKEN},
+    )
+    assert exported.status_code == 200
+    assert "'=HYPERLINK" in exported.text
+    assert " =HYPERLINK" not in exported.text
+
+
 def test_empty_analytics_does_not_divide_by_zero(client):
     data = client.get("/api/analytics").json()
     assert data["total_feedback"] == 0
