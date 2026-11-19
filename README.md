@@ -65,8 +65,10 @@ The API listens on `http://127.0.0.1:8000`. The Vite dev server proxies `/api` t
 Before starting the API, configure a strong admin token (at least 32 characters). For PowerShell:
 
 ```powershell
-$env:MAILMATE_ADMIN_TOKEN = python -c "import secrets; print(secrets.token_urlsafe(48))"
+$token = python -c "import secrets; print(secrets.token_urlsafe(48))"
+$env:MAILMATE_ADMIN_TOKEN = $token
 $env:MAILMATE_ALLOWED_ORIGINS = "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173,http://127.0.0.1:4173"
+Write-Host "Copy this token into the Feedback admin-token field: $token"
 npm run api
 ```
 
