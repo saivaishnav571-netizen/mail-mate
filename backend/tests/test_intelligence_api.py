@@ -149,6 +149,20 @@ def test_email_analysis_batch_is_deduplicated(client):
     assert analytics["last_analyzed_at"]
 
 
+def test_email_analysis_requests_are_rate_limited(client):
+    payload = {
+        "dataset": "Rate limit test",
+        "messages": [analysis_message("rate-limited-email")],
+    }
+    for _ in range(15):
+        response = client.post("/api/emails/analyze", json=payload)
+        assert response.status_code == 201
+
+    limited = client.post("/api/emails/analyze", json=payload)
+    assert limited.status_code == 429
+    assert int(limited.headers["retry-after"]) >= 1
+
+
 def test_email_analysis_rejects_invalid_metadata(client):
     bad_category = client.post(
         "/api/emails/analyze",
