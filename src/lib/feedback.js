@@ -133,10 +133,10 @@ export async function reportEmailAnalytics({ dataset, messages }) {
   ).json();
 }
 
-export async function fetchFeedback({ limit = 100, approvedOnly = false } = {}) {
+export async function fetchFeedback({ limit = 100, approvedOnly = false, adminToken } = {}) {
   const params = new URLSearchParams({ limit: String(limit) });
   if (approvedOnly) params.set("approved_only", "true");
-  return (await request(`/feedback?${params.toString()}`)).json();
+  return (await request(`/feedback?${params.toString()}`, { adminToken })).json();
 }
 
 export async function submitFeedback(payload) {
@@ -162,9 +162,10 @@ export async function activateModel(version, adminToken) {
   ).json();
 }
 
-export async function exportFeedbackCsv({ approvedOnly = true } = {}) {
+export async function exportFeedbackCsv({ approvedOnly = true, adminToken } = {}) {
   const params = new URLSearchParams({ approved_only: String(approvedOnly) });
   const response = await request(`/feedback/export?${params.toString()}`, {
+    adminToken,
     headers: { Accept: "text/csv" }
   });
   const disposition = response.headers.get("content-disposition") || "";
