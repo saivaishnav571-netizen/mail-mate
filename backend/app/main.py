@@ -429,6 +429,15 @@ def _inference_out(session: Session, runtime: dict) -> InferenceOut:
     )
 
 
+def _safe_csv_cell(value: str | None) -> str:
+    """Neutralize spreadsheet formula prefixes in user-controlled CSV cells."""
+    text_value = "" if value is None else str(value)
+    probe = text_value.lstrip(" \t\r\n")
+    if probe.startswith(("=", "+", "-", "@")):
+        return "'" + text_value
+    return text_value
+
+
 def _batch_key(dataset: str, message: EmailAnalysisIn) -> str:
     received = message.received_at.isoformat() if message.received_at else ""
     raw = "|".join(
@@ -849,8 +858,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             writer.writerow(
                 [
                     row.id,
-                    row.email_id,
-                    row.email_subject or "",
+                    _safe_csv_cell(row.email_id),
+                    _safe_csv_cell(row.email_subject),
                     row.predicted_category,
                     row.corrected_category,
                     f"{row.original_confidence:.4f}",
