@@ -182,6 +182,7 @@ def test_csv_export_neutralizes_formula_cells(client):
         json={
             **feedback_payload(email_id="=HYPERLINK(\"https://bad.example\")"),
             "email_subject": " =HYPERLINK(\"https://bad.example\")",
+            "model_version": "=1+2",
         },
     )
     assert response.status_code == 201
@@ -194,6 +195,7 @@ def test_csv_export_neutralizes_formula_cells(client):
     rows = list(csv.reader(io.StringIO(exported.text)))
     assert rows[1][1].startswith("'=")
     assert rows[1][2].startswith("'=")
+    assert rows[1][6].startswith("'=")
 
 
 def test_empty_analytics_does_not_divide_by_zero(client):
