@@ -227,7 +227,7 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
     ["ID / subject", "Actual", "Predicted", "Confidence", "Result"].forEach((label) => reviewHeadRow.append(element("th", "", label)));
     reviewHead.append(reviewHeadRow);
     const reviewBody = document.createElement("tbody");
-    result.review_items.forEach((row) => {
+    result.review_items.slice().sort((a, b) => a.confidence - b.confidence || Number(a.correct) - Number(b.correct)).forEach((row) => {
       const tr = document.createElement("tr");
       tr.append(
         element("td", "", row.subject || row.sample_id || "Unidentified sample"),
