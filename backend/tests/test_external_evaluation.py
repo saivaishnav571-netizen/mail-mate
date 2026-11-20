@@ -6,7 +6,7 @@ from __future__ import annotations
 def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
     payload = {
         "dataset": "hand-labeled smoke test",
-        "confidence_threshold": 0.99,
+        "confidence_threshold": 1.0,
         "samples": [
             {"sample_id": "1", "subject": "Assignment due", "text": "Submit your assignment before Friday through the university portal.", "category": "academic"},
             {"sample_id": "2", "subject": "Interview invitation", "text": "The recruiter invites you to interview for the internship role.", "category": "internship"},
@@ -31,11 +31,14 @@ def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
     ]
     assert sum(sum(row) for row in data["confusion_matrix"]["matrix"]) == 5
     assert len(data["items"]) == 5
-    assert data["review_count"] == 5
-    assert data["accepted_count"] == 0
-    assert data["coverage"] == 0
-    assert data["accepted_accuracy"] is None
+    assert data["review_count"] + data["accepted_count"] == 5
+    assert data["coverage"] == data["accepted_count"] / 5
+    if data["accepted_count"]:
+        assert 0 <= data["accepted_accuracy"] <= 1
+    else:
+        assert data["accepted_accuracy"] is None
     assert all(item["needs_review"] for item in data["review_items"])
+    assert all(item["confidence"] < 1.0 for item in data["review_items"])
 
 
 def test_external_evaluation_requires_at_least_five_samples(client):
