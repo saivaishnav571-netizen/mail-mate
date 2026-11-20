@@ -244,7 +244,12 @@ export function scorePriority(email, prediction, sentiment, reference = new Date
 /* ------------------------------------------------------------------ */
 
 export function analyzeEmailAI(email, reference = new Date()) {
-  const text = `${email.from?.name || ""} ${email.from?.email || ""} ${email.subject || ""} ${email.body || ""}`;
+  // Email subjects often contain the strongest intent signal (e.g.
+  // "Interview scheduled", "Assignment due", "Payment required"). Give the
+  // subject modest extra weight without allowing sender identity to dominate.
+  const subject = String(email.subject || "").trim();
+  const sender = `${email.from?.name || ""} ${email.from?.email || ""}`;
+  const text = `${sender} ${subject} ${subject} ${email.body || ""}`;
   const prediction = MODEL.predict(text);
   const sentiment = analyzeSentiment(email.body);
   const summary = summarizeEmail(email);
