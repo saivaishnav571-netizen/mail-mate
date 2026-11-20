@@ -1,0 +1,6 @@
+id,subject,text,category
+real-001,Assignment deadline,"Submit your assignment before Friday through the university portal.",academic
+real-002,Interview invitation,"The recruiter invites you to interview for the internship role.",internship
+real-003,Family dinner,"Can you join the family for dinner this weekend?",personal
+real-004,Contract signature,"Please review the contract and sign it before the deadline.",important
+real-005,Prize offer,"You have won a prize. Claim your gift card now.",spam
