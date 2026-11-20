@@ -100,6 +100,7 @@ export function createDashboardScene(canvas) {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let visible = true, paused = reducedMotion.matches, destroyed = false, frame = 0, last = 0;
   let counts = [0, 0, 0, 0, 0];
+  const countScales = [0.75, 0.75, 0.75, 0.75, 0.75];
   const resize = () => {
     const rect = canvas.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
@@ -137,7 +138,7 @@ export function createDashboardScene(canvas) {
     });
     nodes.forEach(({ node, halo, material }, i) => {
       const pulse = 0.9 + Math.sin(t * 2.2 + i) * 0.11;
-      node.scale.setScalar(pulse);
+      node.scale.setScalar(pulse * countScales[i]);
       halo.rotation.z += 0.006 + i * 0.0006;
       material.emissiveIntensity = 0.14 + Math.max(0, Math.sin(t * 2 + i)) * 0.28;
     });
@@ -147,7 +148,10 @@ export function createDashboardScene(canvas) {
   reducedMotion.addEventListener("change", (e) => { paused = e.matches; if (!paused) last = 0; });
   function updateCounts(next) {
     if (Array.isArray(next)) counts = next.slice(0, 5);
-    nodes.forEach(({ node }, i) => node.scale.setScalar(0.7 + Math.min(1, (counts[i] || 0) / 8) * 0.3);
+    nodes.forEach(({ node }, i) => {
+      countScales[i] = 0.75 + Math.min(1, (counts[i] || 0) / 8) * 0.25;
+      node.scale.setScalar(countScales[i]);
+    });
   }
   function destroy() {
     destroyed = true;
