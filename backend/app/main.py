@@ -854,11 +854,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         classes = [str(label) for label in pipeline.named_steps["clf"].classes_]
         items = []
+        brier_total = 0.0
+        confidence_bins = [{"count": 0, "confidence_sum": 0.0, "correct_sum": 0.0} for _ in range(10)]
+        low_confidence_count = 0
+        misclassified_count = 0
         for sample, label, scores in zip(payload.samples, predicted, probability_rows):
             probability_map = {category: round(float(value), 6) for category, value in zip(classes, scores)}
             confidence = probability_map.get(label, max(probability_map.values(), default=0.0))
             correct = label == sample.category
-            needs_review = confidence < payload.confidence_threshold
+            low_confidence = confidence < payload.confidence_threshold
+            if low_confidence:
+                low_confidence_count += 1
+            if not correct:
+                misclassified_count += 1
+            reasons = []
+            if low_confidence:
+                reasons.append("low_confidence")
+            if not correct:
+                reasons.append("misclassified")
+            needs_review = bool(reasons)
+            brier_total += sum(
+                (float(probability_map.get(category, 0.0)) - (1.0 if category == sample.category else 0.0)) ** 2
+                for category in CATEGORIES
+            )
+            bin_index = min(9, int(float(confidence) * 10))
+            confidence_bins[bin_index]["count"] += 1
+            confidence_bins[bin_index]["confidence_sum"] += float(confidence)
+            confidence_bins[bin_index]["correct_sum"] += 1.0 if correct else 0.0
             items.append({
                 "sample_id": sample.sample_id,
                 "subject": sample.subject,
@@ -867,15 +889,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 "confidence": round(float(confidence), 6),
                 "correct": correct,
                 "needs_review": needs_review,
+                "review_reason": "+".join(reasons) if reasons else None,
                 "probabilities": probability_map,
             })
 
-        accepted = [item for item in items if not item["needs_review"]]
+        accepted = [item for item in items if item["confidence"] >= payload.confidence_threshold]
         review_items = [item for item in items if item["needs_review"]]
         coverage = len(accepted) / len(items) if items else 0.0
         accepted_accuracy = (
             sum(item["correct"] for item in accepted) / len(accepted) if accepted else None
         )
+        ece_total = 0.0
+        for bucket in confidence_bins:
+            if bucket["count"]:
+                mean_confidence = bucket["confidence_sum"] / bucket["count"]
+                mean_accuracy = bucket["correct_sum"] / bucket["count"]
+                ece_total += (bucket["count"] / len(items)) * abs(mean_confidence - mean_accuracy)
         return ExternalEvaluationOut(
             **metrics,
             confidence_threshold=payload.confidence_threshold,
@@ -883,7 +912,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             review_count=len(review_items),
             coverage=round(coverage, 6),
             accepted_accuracy=round(accepted_accuracy, 6) if accepted_accuracy is not None else None,
-            low_confidence_count=len(review_items),
+            low_confidence_count=low_confidence_count,
+            misclassified_count=misclassified_count,
+            brier_score=round(brier_total / len(items), 6),
+            expected_calibration_error=round(ece_total, 6),
             items=items,
             review_items=review_items,
             confidence_note=(
