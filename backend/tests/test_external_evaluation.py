@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 
-def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
+def test_external_labeled_evaluation_returns_metrics_and_review_queue(client, admin_headers):
     payload = {
         "dataset": "hand-labeled smoke test",
         "confidence_threshold": 1.0,
@@ -45,6 +45,10 @@ def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
     else:
         assert data["accepted_accuracy"] is None
     assert all(item["needs_review"] and item["review_reason"] for item in data["review_items"])
+    # Uploaded evaluation samples are not stored as feedback or training data.
+    feedback = client.get("/api/feedback?limit=10", headers=admin_headers)
+    assert feedback.status_code == 200
+    assert feedback.json() == []
 
 
 def test_external_evaluation_requires_at_least_five_samples(client):
