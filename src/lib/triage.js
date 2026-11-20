@@ -286,10 +286,14 @@ export function classifyEmail(email) {
     "prize", "lottery", "verify payment", "guaranteed", "10x"
   ]);
   const strongSpamCount = matches.spam.filter((term) => strongSpamSignals.has(term)).length;
+  const veryStrongSpamSignals = new Set([
+    "you have won", "risk-free", "lottery", "10x", "bitcoin", "crypto"
+  ]);
+  const veryStrongSpamCount = matches.spam.filter((term) => veryStrongSpamSignals.has(term)).length;
   const legitimateContext = scores.academic > 0 || scores.internship > 0 ||
     scores.personal > 0 || matches.important.length > 0;
   const spamIsSupported = scores.spam >= 7 &&
-    (strongSpamCount >= 2 || strongSpamCount >= 1) &&
+    (strongSpamCount >= 2 || (veryStrongSpamCount >= 1 && !legitimateContext)) &&
     scores.spam >= Math.max(scores.academic, scores.internship, scores.personal, scores.important) + 1.5;
 
   if (scores.spam > 0 && !spamIsSupported) {
