@@ -182,7 +182,12 @@ export function trainLogisticRegression(samples, options = {}) {
         .filter((item) => item.weight > 0)
         .slice(0, 6)
         .map((item) => ({ term: item.term, weight: Number(item.weight.toFixed(3)) })),
-      confidence: ranked[0].probability,
+      // Sparse or unfamiliar text is inherently harder to classify.
+      // Do not let class priors create an unjustifiably confident prediction.
+      confidence: Math.min(
+        ranked[0].probability,
+        vector.size <= 2 ? 0.5 : vector.size <= 5 ? 0.65 : 1
+      ),
       knownTokens: vector.size,
       source: "ml"
     };
