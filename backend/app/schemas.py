@@ -166,6 +166,9 @@ class ExternalEvaluationItemOut(BaseModel):
     predicted_category: Category
     confidence: float
     correct: bool
+    accepted: bool
+    low_confidence: bool
+    misclassified: bool
     needs_review: bool
     review_reason: str | None
     probabilities: dict[str, float]
