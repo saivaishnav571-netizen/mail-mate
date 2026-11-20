@@ -11,6 +11,7 @@ import { CATEGORY_BY_ID } from "../lib/triage.js";
 import {
   FeedbackApiError,
   fetchIntelligence,
+  evaluateLabeledDataset,
   isBackendConfigured,
   reportEmailAnalytics
 } from "../lib/feedback.js";
@@ -123,7 +124,17 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
     feedbackCategories: dialog.querySelector("[data-intel-feedback-categories]"),
     feedbackNote: dialog.querySelector("[data-intel-feedback-note]"),
     inference: dialog.querySelector("[data-intel-inference]"),
-    disclosures: dialog.querySelector("[data-intel-disclosures]")
+    disclosures: dialog.querySelector("[data-intel-disclosures]"),
+    evalFile: dialog.querySelector("[data-intel-eval-file]"),
+    evalThreshold: dialog.querySelector("[data-intel-eval-threshold]"),
+    evalRun: dialog.querySelector("[data-intel-eval-run]"),
+    evalStatus: dialog.querySelector("[data-intel-eval-status]"),
+    evalResults: dialog.querySelector("[data-intel-eval-results]"),
+    evalKpis: dialog.querySelector("[data-intel-eval-kpis]"),
+    evalCategories: dialog.querySelector("[data-intel-eval-categories]"),
+    evalMatrix: dialog.querySelector("[data-intel-eval-matrix]"),
+    evalReviewNote: dialog.querySelector("[data-intel-eval-review-note]"),
+    evalReview: dialog.querySelector("[data-intel-eval-review]")
   };
 
   const toggles = Array.from(document.querySelectorAll("[data-intelligence-toggle]"));
@@ -135,10 +146,176 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
   els.close?.addEventListener("click", () => dialog.close());
   els.refresh?.addEventListener("click", () => loadCenter());
   els.retry?.addEventListener("click", () => loadCenter());
+  els.evalFile?.addEventListener("change", () => {
+    els.evalRun.disabled = !els.evalFile.files?.length;
+    els.evalStatus.textContent = els.evalFile.files?.length
+      ? "CSV selected. It will be evaluated by the active model only; no training or storage."
+      : "";
+    els.evalResults.hidden = true;
+  });
+  els.evalRun?.addEventListener("click", runExternalEvaluation);
 
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
   });
+
+
+  async function runExternalEvaluation() {
+    const file = els.evalFile?.files?.[0];
+    if (!file) return;
+    els.evalRun.disabled = true;
+    els.evalStatus.textContent = "Reading and evaluating labeled rows…";
+    els.evalResults.hidden = true;
+    try {
+      if (file.size > 2_000_000) throw new Error("CSV must be 2 MB or smaller.");
+      const rows = parseLabeledCsv(await file.text());
+      if (rows.length < 5) throw new Error("Please include at least 5 labeled emails.");
+      if (rows.length > 2000) throw new Error("Maximum supported dataset size is 2,000 rows.");
+      const result = await evaluateLabeledDataset({
+        dataset: file.name,
+        confidence_threshold: Number(els.evalThreshold?.value || 0.65),
+        samples: rows
+      });
+      renderExternalEvaluation(result);
+      els.evalResults.hidden = false;
+      els.evalStatus.textContent = "Evaluation complete · " + result.test_size + " labeled rows · not stored or used for training.";
+    } catch (error) {
+      els.evalStatus.textContent = error?.message || "Could not evaluate the uploaded CSV.";
+    } finally {
+      els.evalRun.disabled = !els.evalFile.files?.length;
+    }
+  }
+
+  function renderExternalEvaluation(result) {
+    els.evalKpis.replaceChildren(
+      kpi("Accuracy", percent(result.accuracy), result.correct + "/" + result.test_size + " correct"),
+      kpi("Macro precision", percent(result.precision_macro), "across categories"),
+      kpi("Macro recall", percent(result.recall_macro), "across categories"),
+      kpi("Macro F1", percent(result.macro_f1), "balanced headline score", "is-accent"),
+      kpi("Coverage", percent(result.coverage), result.accepted_count + " accepted · " + result.review_count + " review"),
+      kpi("Accepted accuracy", result.accepted_accuracy === null ? "—" : percent(result.accepted_accuracy), "threshold " + percent(result.confidence_threshold))
+    );
+
+    const table = element("table", "intel-table");
+    const head = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    ["Category", "Precision", "Recall", "F1", "Support"].forEach((label) => headRow.append(element("th", "", label)));
+    head.append(headRow);
+    const body = document.createElement("tbody");
+    result.per_category.forEach((row) => {
+      const tr = document.createElement("tr");
+      const category = element("th", "intel-table-category");
+      category.scope = "row";
+      category.append(categoryDot(row.category), document.createTextNode(categoryLabel(row.category)));
+      tr.append(category, element("td", "", percent(row.precision)), element("td", "", percent(row.recall)), element("td", "intel-f1", percent(row.f1)), element("td", "intel-support", number(row.support)));
+      body.append(tr);
+    });
+    table.append(head, body);
+    els.evalCategories.replaceChildren(table);
+    renderExternalConfusionMatrix(els.evalMatrix, result.confusion_matrix);
+
+    els.evalReviewNote.textContent = result.review_count + " of " + result.test_size + " examples fell below " + percent(result.confidence_threshold) + " confidence and should be reviewed. " + result.confidence_note;
+    if (!result.review_items.length) {
+      els.evalReview.replaceChildren(element("p", "intel-empty", "No rows fell below the selected confidence threshold."));
+      return;
+    }
+    const reviewTable = element("table", "intel-table");
+    const reviewHead = document.createElement("thead");
+    const reviewHeadRow = document.createElement("tr");
+    ["ID / subject", "Actual", "Predicted", "Confidence", "Result"].forEach((label) => reviewHeadRow.append(element("th", "", label)));
+    reviewHead.append(reviewHeadRow);
+    const reviewBody = document.createElement("tbody");
+    result.review_items.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.append(
+        element("td", "", row.subject || row.sample_id || "Unidentified sample"),
+        element("td", "", categoryLabel(row.actual_category)),
+        element("td", "", categoryLabel(row.predicted_category)),
+        element("td", "", percent(row.confidence)),
+        element("td", row.correct ? "intel-review-correct" : "intel-review-error", row.correct ? "Correct" : "Incorrect")
+      );
+      reviewBody.append(tr);
+    });
+    reviewTable.append(reviewHead, reviewBody);
+    els.evalReview.replaceChildren(reviewTable);
+  }
+
+  function renderExternalConfusionMatrix(container, confusion) {
+    const labels = confusion.labels;
+    const matrix = confusion.matrix;
+    const table = element("table", "intel-table intel-matrix");
+    const head = document.createElement("thead");
+    const row = document.createElement("tr");
+    row.append(element("th", "intel-matrix-corner", "Actual ↓"));
+    labels.forEach((label) => row.append(element("th", "", categoryLabel(label))));
+    head.append(row);
+    const body = document.createElement("tbody");
+    labels.forEach((actual, index) => {
+      const tr = document.createElement("tr");
+      const th = element("th", "intel-matrix-row");
+      th.scope = "row";
+      th.append(categoryDot(actual), document.createTextNode(categoryLabel(actual)));
+      tr.append(th);
+      const actualRow = matrix[index] || [];
+      const total = actualRow.reduce((sum, value) => sum + Number(value || 0), 0);
+      labels.forEach((label, column) => {
+        const value = Number(actualRow[column] || 0);
+        const cell = element("td", "intel-matrix-cell", number(value));
+        cell.style.setProperty("--cell-strength", total ? (value / total).toFixed(3) : "0");
+        if (index === column) cell.classList.add("is-diagonal");
+        tr.append(cell);
+      });
+      body.append(tr);
+    });
+    table.append(head, body);
+    container.replaceChildren(table);
+  }
+
+  function parseLabeledCsv(source) {
+    const rows = [];
+    let row = [];
+    let field = "";
+    let quoted = false;
+    const text = String(source || "").replace(/^\uFEFF/, "");
+    for (let i = 0; i < text.length; i += 1) {
+      const ch = text[i];
+      if (quoted) {
+        if (ch === '"' && text[i + 1] === '"') { field += '"'; i += 1; }
+        else if (ch === '"') quoted = false;
+        else field += ch;
+      } else if (ch === '"') quoted = true;
+      else if (ch === ",") { row.push(field); field = ""; }
+      else if (ch === "\n" || ch === "\r") {
+        if (ch === "\r" && text[i + 1] === "\n") i += 1;
+        row.push(field); field = "";
+        if (row.some((value) => value.trim())) rows.push(row);
+        row = [];
+      } else field += ch;
+    }
+    row.push(field);
+    if (row.some((value) => value.trim())) rows.push(row);
+    if (quoted) throw new Error("CSV contains an unclosed quoted field.");
+    if (rows.length < 2) throw new Error("CSV needs a header row and labeled examples.");
+    const headers = rows.shift().map((header) => header.trim().toLowerCase());
+    const categoryIndex = headers.indexOf("category");
+    const textIndex = headers.indexOf("text");
+    const subjectIndex = headers.indexOf("subject");
+    const idIndex = headers.indexOf("id");
+    if (categoryIndex < 0 || textIndex < 0) throw new Error("CSV must include category and text columns.");
+    const allowed = new Set(["important", "academic", "internship", "personal", "spam"]);
+    return rows.map((values, index) => {
+      const category = String(values[categoryIndex] || "").trim().toLowerCase();
+      const text = String(values[textIndex] || "").trim();
+      if (!allowed.has(category)) throw new Error("Row " + (index + 2) + ": invalid category " + category + ".");
+      if (!text) throw new Error("Row " + (index + 2) + ": text is empty.");
+      return {
+        sample_id: idIndex >= 0 ? String(values[idIndex] || "").trim() || null : null,
+        subject: subjectIndex >= 0 ? String(values[subjectIndex] || "").trim() || null : null,
+        text,
+        category
+      };
+    });
+  }
 
   async function openCenter() {
     if (!dialog.open) {
