@@ -277,17 +277,45 @@ export function classifyEmail(email) {
     matches.internship.unshift("sender works in recruitment");
   }
 
+  // Spam is deliberately conservative: generic marketing words such as
+  // "exclusive", "selected", "webinar", "unsubscribe", or "invoice" alone
+  // are not enough to send legitimate mail to Spam.
+  const strongSpamSignals = new Set([
+    "you have won", "gift card", "wire transfer", "redelivery fee",
+    "parcel is held", "risk-free", "crypto", "bitcoin", "act now",
+    "prize", "lottery", "verify payment", "guaranteed", "10x"
+  ]);
+  const strongSpamCount = matches.spam.filter((term) => strongSpamSignals.has(term)).length;
+  const legitimateContext = scores.academic > 0 || scores.internship > 0 ||
+    scores.personal > 0 || matches.important.length > 0;
+  const spamIsSupported = scores.spam >= 7 &&
+    (strongSpamCount >= 2 || strongSpamCount >= 1) &&
+    scores.spam >= Math.max(scores.academic, scores.internship, scores.personal, scores.important) + 1.5;
+
+  if (scores.spam > 0 && !spamIsSupported) {
+    // Keep weak spam cues visible to the explanation but lower the category
+    // score so one generic term cannot dominate the prediction.
+    scores.spam *= legitimateContext ? 0.35 : 0.6;
+  }
+
   const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
   const [winner, topScore] = ranked[0];
   const secondScore = ranked[1]?.[1] || 0;
   const category = topScore > 0 ? winner : "important";
+  const margin = topScore - secondScore;
+  const evidenceCount = (matches[category] || []).length;
   const confidence =
     topScore > 0
-      ? Math.round(Math.min(0.98, 0.54 + 0.44 * (topScore / (topScore + secondScore))) * 100)
+      ? Math.round(Math.min(0.92, Math.max(0.4,
+          0.48 + 0.28 * (margin / (topScore + 1)) + 0.04 * Math.min(4, evidenceCount)
+        )) * 100)
       : 36;
 
   const reasons = (matches[category] || []).slice(0, 4).map(readableMatch);
   if (!reasons.length) reasons.push("No strong keyword signals; placed in Important for a human check.");
+  if (category === "spam" && !spamIsSupported) {
+    reasons.unshift("Spam signals are weak; this message may need review.");
+  }
 
   return {
     category,
