@@ -1,0 +1,60 @@
+"""Tests for evaluation on externally labeled examples."""
+
+from __future__ import annotations
+
+
+def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
+    payload = {
+        "dataset": "hand-labeled smoke test",
+        "confidence_threshold": 0.99,
+        "samples": [
+            {"sample_id": "1", "subject": "Assignment due", "text": "Submit your assignment before Friday through the university portal.", "category": "academic"},
+            {"sample_id": "2", "subject": "Interview invitation", "text": "The recruiter invites you to interview for the internship role.", "category": "internship"},
+            {"sample_id": "3", "subject": "Family dinner", "text": "Can you join the family for dinner this weekend?", "category": "personal"},
+            {"sample_id": "4", "subject": "Contract signature", "text": "Please review the contract and sign it before the deadline.", "category": "important"},
+            {"sample_id": "5", "subject": "Prize offer", "text": "You have won a prize. Claim your gift card now.", "category": "spam"},
+        ],
+    }
+
+    response = client.post("/api/model/evaluate", json=payload)
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["dataset"] == payload["dataset"]
+    assert data["test_size"] == 5
+    assert 0 <= data["accuracy"] <= 1
+    assert 0 <= data["precision_macro"] <= 1
+    assert 0 <= data["recall_macro"] <= 1
+    assert 0 <= data["macro_f1"] <= 1
+    assert data["confusion_matrix"]["labels"] == [
+        "important", "academic", "internship", "personal", "spam"
+    ]
+    assert sum(sum(row) for row in data["confusion_matrix"]["matrix"]) == 5
+    assert len(data["items"]) == 5
+    assert data["review_count"] == 5
+    assert data["accepted_count"] == 0
+    assert data["coverage"] == 0
+    assert data["accepted_accuracy"] is None
+    assert all(item["needs_review"] for item in data["review_items"])
+
+
+def test_external_evaluation_requires_at_least_five_samples(client):
+    response = client.post(
+        "/api/model/evaluate",
+        json={
+            "dataset": "too-small",
+            "samples": [{"text": "test email", "category": "important"}] * 4,
+        },
+    )
+    assert response.status_code == 422
+
+
+def test_external_evaluation_rejects_invalid_labels(client):
+    response = client.post(
+        "/api/model/evaluate",
+        json={
+            "dataset": "invalid labels",
+            "samples": [{"text": "text", "category": "unknown"}] * 5,
+        },
+    )
+    assert response.status_code == 422
