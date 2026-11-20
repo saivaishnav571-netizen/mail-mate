@@ -34,7 +34,7 @@ def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
     assert data["review_count"] == len(data["review_items"])
     assert data["low_confidence_count"] == sum(item["confidence"] < 1.0 for item in data["items"])
     assert data["misclassified_count"] == sum(not item["correct"] for item in data["items"])
-    assert data["accepted_count"] == sum(item["confidence"] >= 1.0 for item in data["items"])
+    assert data["accepted_count"] == sum(item["confidence"] >= 1.0 for item in data["items"]))
     assert data["review_count"] >= data["low_confidence_count"]
     assert data["review_count"] >= data["misclassified_count"]
     assert data["coverage"] == data["accepted_count"] / 5
