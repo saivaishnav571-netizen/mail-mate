@@ -146,6 +146,52 @@ class ModelMetricsOut(BaseModel):
     evaluated_at: datetime
 
 
+class EvaluationSampleIn(BaseModel):
+    sample_id: str | None = Field(default=None, max_length=160)
+    subject: str | None = Field(default=None, max_length=400)
+    text: str = Field(min_length=1, max_length=20_000)
+    category: Category
+
+
+class ExternalEvaluationIn(BaseModel):
+    dataset: str = Field(default="Uploaded labeled dataset", min_length=1, max_length=160)
+    confidence_threshold: float = Field(default=0.65, ge=0.0, le=1.0)
+    samples: list[EvaluationSampleIn] = Field(min_length=5, max_length=2_000)
+
+
+class ExternalEvaluationItemOut(BaseModel):
+    sample_id: str | None
+    subject: str | None
+    actual_category: Category
+    predicted_category: Category
+    confidence: float
+    correct: bool
+    needs_review: bool
+    probabilities: dict[str, float]
+
+
+class ExternalEvaluationOut(BaseModel):
+    accuracy: float
+    precision_macro: float
+    recall_macro: float
+    macro_f1: float
+    correct: int
+    test_size: int
+    dataset: str
+    per_category: list[PerCategoryMetric]
+    confusion_matrix: ConfusionMatrixOut
+    confidence_threshold: float
+    accepted_count: int
+    review_count: int
+    coverage: float
+    accepted_accuracy: float | None
+    low_confidence_count: int
+    evaluated_at: datetime
+    items: list[ExternalEvaluationItemOut]
+    review_items: list[ExternalEvaluationItemOut]
+    confidence_note: str
+
+
 class ModelInfoOut(BaseModel):
     name: str
     version: str
