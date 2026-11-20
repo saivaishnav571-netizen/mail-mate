@@ -1662,14 +1662,14 @@
             <div class="intel-section-head">
               <div>
                 <h3 id="intel-external-evaluation-title">Real-world labeled evaluation</h3>
-                <p class="intel-section-note">Upload a labeled CSV to test the active model on emails it has not trained on. Evaluation data is not stored or used for training.</p>
+                <p class="intel-section-note">Upload a labeled CSV to test the active model on emails it has not trained on. Evaluation data is not stored or used for training. For useful metrics, aim for 50+ labeled examples per category and keep them separate from training data.</p>
               </div>
               <span class="intel-badge">external test set</span>
             </div>
             <div class="intel-eval-upload">
               <label class="field-label" for="intel-eval-file">Labeled email CSV</label>
               <input id="intel-eval-file" data-intel-eval-file type="file" accept=".csv,text/csv" />
-              <p class="intel-hint">Required columns: <code>category,text</code>. Optional: <code>subject,id</code>. Categories: important, academic, internship, personal, spam. Minimum 5 rows; maximum 2,000.</p>
+              <p class="intel-hint">Required columns: <code>category,text</code>. Optional: <code>subject,id</code>. Categories: important, academic, internship, personal, spam. Minimum 5 rows; maximum 2,000. Message text is sent to your configured backend for evaluation—redact personal or sensitive data before uploading.</p>
               <div class="intel-eval-controls">
                 <label class="field-label" for="intel-eval-threshold">Confidence review threshold</label>
                 <select id="intel-eval-threshold" data-intel-eval-threshold>
