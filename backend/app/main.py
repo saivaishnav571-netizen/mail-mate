@@ -54,6 +54,8 @@ from .schemas import (
     EmailAnalyticsOut,
     EmailAnalysisIn,
     EvaluationOut,
+    ExternalEvaluationIn,
+    ExternalEvaluationOut,
     FeedbackCreate,
     FeedbackOut,
     InferenceOut,
@@ -592,6 +594,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         "/api/feedback": 30,
         "/api/emails/analyze": 15,
         "/api/model/predict": 60,
+        "/api/model/evaluate": 10,
     }
 
     @app.middleware("http")
@@ -805,6 +808,91 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             stored=stored,
             duplicates=duplicates,
             total_analyzed=total,
+        )
+
+    @app.post("/api/model/evaluate", response_model=ExternalEvaluationOut)
+    def evaluate_external_dataset(
+        payload: ExternalEvaluationIn,
+        session: Session = Depends(get_db),
+    ) -> ExternalEvaluationOut:
+        """Evaluate the active model on user-supplied, held-out labeled data.
+
+        This endpoint never trains on the uploaded evaluation samples, never
+        stores their message text, and never activates or changes a model.
+        """
+        active = _get_active_model(session)
+        if not active:
+            raise HTTPException(status_code=404, detail="No active model version.")
+
+        runtime = _load_pipeline(Path(active.artifact_path))
+        if runtime["status"] != "loaded" or runtime["pipeline"] is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The active model artifact is missing or could not be loaded.",
+            )
+
+        pipeline = runtime["pipeline"]
+        samples = [
+            {"text": f"{sample.subject or ''} {sample.text}".strip(), "category": sample.category}
+            for sample in payload.samples
+        ]
+        try:
+            metrics = evaluate_pipeline(pipeline, samples, payload.dataset)
+            predicted = [str(label) for label in pipeline.predict([row["text"] for row in samples])]
+            if hasattr(pipeline, "predict_proba"):
+                probability_rows = pipeline.predict_proba([row["text"] for row in samples])
+                confidence_kind = "probability"
+            else:
+                decision = pipeline.decision_function([row["text"] for row in samples])
+                probability_rows = [_softmax(row) for row in decision]
+                confidence_kind = "relative_score_not_calibrated_probability"
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="The active model could not evaluate this labeled dataset.",
+            ) from exc
+
+        classes = [str(label) for label in pipeline.named_steps["clf"].classes_]
+        items = []
+        for sample, label, scores in zip(payload.samples, predicted, probability_rows):
+            probability_map = {category: round(float(value), 6) for category, value in zip(classes, scores)}
+            confidence = probability_map.get(label, max(probability_map.values(), default=0.0))
+            correct = label == sample.category
+            needs_review = confidence < payload.confidence_threshold
+            items.append({
+                "sample_id": sample.sample_id,
+                "subject": sample.subject,
+                "actual_category": sample.category,
+                "predicted_category": label,
+                "confidence": round(float(confidence), 6),
+                "correct": correct,
+                "needs_review": needs_review,
+                "probabilities": probability_map,
+            })
+
+        accepted = [item for item in items if not item["needs_review"]]
+        review_items = [item for item in items if item["needs_review"]]
+        coverage = len(accepted) / len(items) if items else 0.0
+        accepted_accuracy = (
+            sum(item["correct"] for item in accepted) / len(accepted) if accepted else None
+        )
+        return ExternalEvaluationOut(
+            **metrics,
+            confidence_threshold=payload.confidence_threshold,
+            accepted_count=len(accepted),
+            review_count=len(review_items),
+            coverage=round(coverage, 6),
+            accepted_accuracy=round(accepted_accuracy, 6) if accepted_accuracy is not None else None,
+            low_confidence_count=len(review_items),
+            items=items,
+            review_items=review_items,
+            confidence_note=(
+                "Confidence is the model's score for its chosen label, not a guarantee of correctness. "
+                "SVM scores are relative and not calibrated probabilities."
+            ) if confidence_kind != "probability" else (
+                "Model probabilities are not necessarily calibrated. Use confidence as a review aid, "
+                "not a guarantee of correctness."
+            ),
         )
 
     @app.post("/api/model/predict", response_model=PredictOut)
