@@ -167,6 +167,7 @@ class ExternalEvaluationItemOut(BaseModel):
     confidence: float
     correct: bool
     needs_review: bool
+    review_reason: str | None
     probabilities: dict[str, float]
 
 
@@ -186,6 +187,9 @@ class ExternalEvaluationOut(BaseModel):
     coverage: float
     accepted_accuracy: float | None
     low_confidence_count: int
+    misclassified_count: int
+    brier_score: float
+    expected_calibration_error: float
     evaluated_at: datetime
     items: list[ExternalEvaluationItemOut]
     review_items: list[ExternalEvaluationItemOut]
