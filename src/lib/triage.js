@@ -297,9 +297,15 @@ export function classifyEmail(email) {
     scores.spam >= Math.max(scores.academic, scores.internship, scores.personal, scores.important) + 1.5;
 
   if (scores.spam > 0 && !spamIsSupported) {
-    // Keep weak spam cues visible to the explanation but lower the category
-    // score so one generic term cannot dominate the prediction.
-    scores.spam *= legitimateContext ? 0.35 : 0.6;
+    // Keep weak spam cues visible to the explanation but never let weak
+    // evidence win the category decision on its own.
+    const strongestLegitimate = Math.max(
+      scores.important, scores.academic, scores.internship, scores.personal
+    );
+    scores.spam = Math.min(
+      scores.spam * (legitimateContext ? 0.35 : 0.6),
+      strongestLegitimate
+    );
   }
 
   const ranked = Object.entries(scores).sort((a, b) => b[1] - a[1]);
