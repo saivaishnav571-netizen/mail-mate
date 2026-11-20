@@ -192,8 +192,10 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
       kpi("Macro precision", percent(result.precision_macro), "across categories"),
       kpi("Macro recall", percent(result.recall_macro), "across categories"),
       kpi("Macro F1", percent(result.macro_f1), "balanced headline score", "is-accent"),
-      kpi("Coverage", percent(result.coverage), result.accepted_count + " accepted · " + result.review_count + " review"),
-      kpi("Accepted accuracy", result.accepted_accuracy === null ? "—" : percent(result.accepted_accuracy), "threshold " + percent(result.confidence_threshold))
+      kpi("Coverage", percent(result.coverage), result.accepted_count + " confident predictions"),
+      kpi("Accepted accuracy", result.accepted_accuracy === null ? "—" : percent(result.accepted_accuracy), "threshold " + percent(result.confidence_threshold)),
+      kpi("Brier score", number(result.brier_score, 3), "lower is better · probability quality"),
+      kpi("Calibration error", percent(result.expected_calibration_error), "lower means confidence aligns better")
     );
 
     const table = element("table", "intel-table");
@@ -214,7 +216,7 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
     els.evalCategories.replaceChildren(table);
     renderExternalConfusionMatrix(els.evalMatrix, result.confusion_matrix);
 
-    els.evalReviewNote.textContent = result.review_count + " of " + result.test_size + " examples fell below " + percent(result.confidence_threshold) + " confidence and should be reviewed. " + result.confidence_note;
+    els.evalReviewNote.textContent = result.review_count + " examples flagged: " + result.low_confidence_count + " low-confidence and " + result.misclassified_count + " incorrect (overlap possible). " + result.confidence_note;
     if (!result.review_items.length) {
       els.evalReview.replaceChildren(element("p", "intel-empty", "No rows fell below the selected confidence threshold."));
       return;
@@ -232,7 +234,7 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
         element("td", "", categoryLabel(row.actual_category)),
         element("td", "", categoryLabel(row.predicted_category)),
         element("td", "", percent(row.confidence)),
-        element("td", row.correct ? "intel-review-correct" : "intel-review-error", row.correct ? "Correct" : "Incorrect")
+        element("td", row.correct ? "intel-review-correct" : "intel-review-error", (row.correct ? "Correct" : "Incorrect") + " · " + (row.review_reason || "review"))
       );
       reviewBody.append(tr);
     });
