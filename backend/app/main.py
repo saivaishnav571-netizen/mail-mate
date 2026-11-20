@@ -909,6 +909,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 mean_accuracy = bucket["correct_sum"] / bucket["count"]
                 ece_total += (bucket["count"] / len(items)) * abs(mean_confidence - mean_accuracy)
         return ExternalEvaluationOut(
+            model_version=active.version,
             **metrics,
             confidence_threshold=payload.confidence_threshold,
             accepted_count=len(accepted),
