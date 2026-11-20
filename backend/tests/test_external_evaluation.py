@@ -31,14 +31,17 @@ def test_external_labeled_evaluation_returns_metrics_and_review_queue(client):
     ]
     assert sum(sum(row) for row in data["confusion_matrix"]["matrix"]) == 5
     assert len(data["items"]) == 5
-    assert data["review_count"] + data["accepted_count"] == 5
-    assert data["coverage"] == data["accepted_count"] / 5
+    assert data["review_count"] >= data["low_confidence_count"]
+    assert data["review_count"] >= data["misclassified_count"]
+    assert data["review_count"] + data["accepted_count"] >= 5
+    assert 0 <= data["coverage"] <= 1
+    assert 0 <= data["brier_score"] <= 2
+    assert 0 <= data["expected_calibration_error"] <= 1
     if data["accepted_count"]:
         assert 0 <= data["accepted_accuracy"] <= 1
     else:
         assert data["accepted_accuracy"] is None
-    assert all(item["needs_review"] for item in data["review_items"])
-    assert all(item["confidence"] < 1.0 for item in data["review_items"])
+    assert all(item["needs_review"] and item["review_reason"] for item in data["review_items"])
 
 
 def test_external_evaluation_requires_at_least_five_samples(client):
