@@ -1657,6 +1657,53 @@
             <p class="intel-note" data-intel-metrics-note></p>
           </section>
 
+          <section class="intel-section" aria-labelledby="intel-external-evaluation-title">
+            <div class="intel-section-head">
+              <div>
+                <h3 id="intel-external-evaluation-title">Real-world labeled evaluation</h3>
+                <p class="intel-section-note">Upload a labeled CSV to test the active model on emails it has not trained on. Evaluation data is not stored or used for training.</p>
+              </div>
+              <span class="intel-badge">external test set</span>
+            </div>
+            <div class="intel-eval-upload">
+              <label class="field-label" for="intel-eval-file">Labeled email CSV</label>
+              <input id="intel-eval-file" data-intel-eval-file type="file" accept=".csv,text/csv" />
+              <p class="intel-hint">Required columns: <code>category,text</code>. Optional: <code>subject,id</code>. Categories: important, academic, internship, personal, spam. Minimum 5 rows; maximum 2,000.</p>
+              <div class="intel-eval-controls">
+                <label class="field-label" for="intel-eval-threshold">Confidence review threshold</label>
+                <select id="intel-eval-threshold" data-intel-eval-threshold>
+                  <option value="0.50">50%</option>
+                  <option value="0.60">60%</option>
+                  <option value="0.65" selected>65%</option>
+                  <option value="0.70">70%</option>
+                  <option value="0.80">80%</option>
+                  <option value="0.90">90%</option>
+                </select>
+                <button class="btn btn-primary btn-sm" type="button" data-intel-eval-run disabled>Evaluate dataset</button>
+              </div>
+              <p class="intel-eval-status" data-intel-eval-status aria-live="polite"></p>
+            </div>
+            <div class="intel-eval-results" data-intel-eval-results hidden>
+              <div class="intel-kpis" data-intel-eval-kpis></div>
+              <div class="intel-split">
+                <div class="intel-panel">
+                  <h4>External per-category report</h4>
+                  <div class="intel-table-wrap" data-intel-eval-categories></div>
+                </div>
+                <div class="intel-panel">
+                  <h4>External confusion matrix</h4>
+                  <div class="intel-table-wrap intel-table-wrap--matrix" data-intel-eval-matrix></div>
+                  <p class="intel-hint">Rows are actual labels, columns are predictions.</p>
+                </div>
+              </div>
+              <section class="intel-panel intel-eval-review">
+                <h4>Low-confidence review queue</h4>
+                <p class="intel-hint" data-intel-eval-review-note></p>
+                <div class="intel-table-wrap" data-intel-eval-review></div>
+              </section>
+            </div>
+          </section>
+
           <section class="intel-section" aria-labelledby="intel-comparison-title">
             <div class="intel-section-head">
               <div>
