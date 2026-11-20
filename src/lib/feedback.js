@@ -120,6 +120,10 @@ export async function fetchAnalytics() {
   return (await request("/analytics")).json();
 }
 
+export async function evaluateLabeledDataset(payload) {
+  return (await request("/model/evaluate", { method: "POST", body: payload })).json();
+}
+
 export async function fetchIntelligence() {
   return (await request("/intelligence")).json();
 }
