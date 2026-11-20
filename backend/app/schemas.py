@@ -175,6 +175,7 @@ class ExternalEvaluationItemOut(BaseModel):
 
 
 class ExternalEvaluationOut(BaseModel):
+    model_version: str
     accuracy: float
     precision_macro: float
     recall_macro: float
