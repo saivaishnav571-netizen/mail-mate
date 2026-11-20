@@ -13,6 +13,7 @@ import {
   rewriteReply
 } from "../lib/ai.js";
 import { fetchTestInbox, parseDataset } from "../lib/dataset.js";
+import { createDashboardScene } from "./dashboard-scene.js";
 import { pulseValue, replayAnimation } from "../lib/motion.js";
 import {
   activateModel,
@@ -36,6 +37,8 @@ const CATEGORY_CLASSES = ["cat-important", "cat-academic", "cat-internship", "ca
 
 export function initInboxDemo(root) {
   if (!root) return;
+  const dashboardScene = createDashboardScene(root.querySelector("[data-dashboard-scene]"));
+  window.addEventListener("pagehide", () => dashboardScene.destroy(), { once: true });
 
   const els = {
     filters: root.querySelector("[data-filters]"),
@@ -361,6 +364,10 @@ export function initInboxDemo(root) {
     renderDetail();
     renderReminderCount();
     renderStatus();
+    const counts = categoryCounts();
+    dashboardScene.updateCounts([counts.important, counts.academic, counts.internship, counts.personal, counts.spam]);
+    root.querySelector("[data-dashboard-total]")?.replaceChildren(String(counts.all));
+    root.querySelector("[data-dashboard-unread]")?.replaceChildren(String(state.emails.filter((email) => !email.read).length));
     els.resultCount.textContent = resultLabel();
   }
 
