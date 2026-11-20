@@ -60,6 +60,7 @@ export function initInboxDemo(root) {
     category: root.querySelector("[data-detail-category]"),
     categoryLabel: root.querySelector("[data-detail-category-label]"),
     confidence: root.querySelector("[data-detail-confidence]"),
+    reviewConfidence: root.querySelector("[data-review-confidence]"),
     subject: root.querySelector("[data-detail-subject]"),
     avatar: root.querySelector("[data-detail-avatar]"),
     from: root.querySelector("[data-detail-from]"),
@@ -614,6 +615,17 @@ export function initInboxDemo(root) {
     els.category.textContent = CATEGORY_BY_ID[category].label;
     els.categoryLabel.textContent = `${ensemble}% match`;
     els.confidence.textContent = `${ensemble}% match`;
+    const needsHumanReview = ensemble < 65 ||
+      (email.ai?.model && !email.ai.model.agreement) ||
+      (email.ai?.model?.knownTokens !== undefined && email.ai.model.knownTokens < 3);
+    if (els.reviewConfidence) {
+      els.reviewConfidence.hidden = !needsHumanReview;
+      els.reviewConfidence.textContent = needsHumanReview
+        ? (email.ai?.model && !email.ai.model.agreement ? "Model disagreement · review" : ensemble < 65 ? "Low confidence · review" : "Sparse text · review")
+        : "High-confidence match";
+      els.reviewConfidence.classList.toggle("is-review", needsHumanReview);
+      els.reviewConfidence.title = "Advisory only. Review when confidence is below 65%, rule/model disagree, or the email has too few known tokens.";
+    }
     els.confidence.title = email.ai
       ? `Rule engine ${email.analysis.confidence}% · ${email.ai.model.predictedLabel} model ${Math.round(
           email.ai.model.confidence * 100
