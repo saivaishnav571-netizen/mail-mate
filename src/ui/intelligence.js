@@ -178,7 +178,7 @@ export function initIntelligenceCenter({ getAnalyticsSnapshot } = {}) {
       });
       renderExternalEvaluation(result);
       els.evalResults.hidden = false;
-      els.evalStatus.textContent = "Evaluation complete · " + result.test_size + " labeled rows · not stored or used for training.";
+      els.evalStatus.textContent = "Evaluation complete · model " + result.model_version + " · " + result.test_size + " labeled rows · not stored or used for training.";
     } catch (error) {
       els.evalStatus.textContent = error?.message || "Could not evaluate the uploaded CSV.";
     } finally {
