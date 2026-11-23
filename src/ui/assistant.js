@@ -1,4 +1,4 @@
-import { buildInboxBrief, buildSearchIndex, semanticSearch } from "../lib/ai.js";
+import { analyzeEmailAI, buildInboxBrief, buildSearchIndex, semanticSearch } from "../lib/ai.js";
 
 const URGENCY_PATTERNS = [
   /\b(urgent|urgently|asap|immediately|action required|final notice|overdue|deadline|expires?|last chance)\b/i,
@@ -27,9 +27,15 @@ export function scanEmailRisk(email) {
 }
 
 export function buildAssistantOverview(emails = [], reference = new Date()) {
-  const brief = buildInboxBrief(emails, reference);
-  const nonSpam = emails.filter((email) => email.analysis?.category !== "spam");
+  const prepared = emails.map((email) => {
+    const analysis = { ...(email.analysis || {}), category: email.analysis?.category || email.category || "important" };
+    const ai = email.ai || analyzeEmailAI({ ...email, analysis }, reference);
+    return { ...email, analysis, ai, actions: email.actions || [], deadline: email.deadline || null };
+  });
+  const brief = buildInboxBrief(prepared, reference);
+  const nonSpam = prepared.filter((email) => email.analysis?.category !== "spam");
   const unread = nonSpam.filter((email) => !email.read);
+  const dueSoon = nonSpam.filter((email) => email.deadline?.date && ((email.deadline.date.getTime() - reference.getTime()) >= -24 * 60 * 60 * 1000) && ((email.deadline.date.getTime() - reference.getTime()) <= 48 * 60 * 60 * 1000)).length;
   const deadlines = nonSpam
     .filter((email) => email.deadline?.date)
     .sort((a, b) => a.deadline.date - b.deadline.date);
@@ -42,13 +48,13 @@ export function buildAssistantOverview(emails = [], reference = new Date()) {
     category: email.analysis?.category || email.category || "important",
     priority: email.ai?.priority?.score || 0
   })));
-  const risky = emails.map((email) => ({ email, risk: scanEmailRisk(email) }))
+  const risky = prepared.map((email) => ({ email, risk: scanEmailRisk(email) }))
     .filter(({ risk }) => risk.score >= 25)
     .sort((a, b) => b.risk.score - a.risk.score);
   const ranked = nonSpam.slice().sort((a, b) =>
     (b.ai?.priority?.score || 0) - (a.ai?.priority?.score || 0)
   );
-  return { brief, unread, deadlines, tasks, risky, ranked, highPriority: ranked.filter((email) => (email.ai?.priority?.score || 0) >= 60) };
+  return { brief, unread, deadlines, tasks, risky, ranked, dueSoon, highPriority: ranked.filter((email) => (email.ai?.priority?.score || 0) >= 60) };
 }
 
 function sentenceExcerpt(email, query) {
@@ -101,7 +107,7 @@ function renderBrief(root, overview) {
   [
     ["Unread", overview.unread.length],
     ["High priority", overview.highPriority.length],
-    ["Deadlines ≤ 48h", brief.dueSoon],
+    ["Deadlines ≤ 48h", overview.dueSoon],
     ["Action items", overview.tasks.length]
   ].forEach(([label, value]) => {
     const card = create("div", "assistant-stat");
