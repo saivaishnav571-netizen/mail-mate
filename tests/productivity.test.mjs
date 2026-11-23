@@ -13,7 +13,7 @@ test("task sorting puts open overdue tasks first, then date and priority", () =>
 });
 
 test("task breakdown trims, deduplicates and limits the generated steps", () => {
-  assert.deepEqual(splitTaskIdeas("Plan project; build prototype and test it"), ["Plan project", "build prototype", "test it"]);
+  assert.deepEqual(splitTaskIdeas("Plan project; build prototype and test it"), ["Plan project", "build prototype", "test it"]);\n  assert.deepEqual(splitTaskIdeas("draft proposal and then review"), ["draft proposal", "review"]);
   assert.equal(splitTaskIdeas("one, two, three, four, five, six, seven").length, 6);
 });
 
