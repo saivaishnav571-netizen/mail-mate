@@ -2098,6 +2098,23 @@ export function initInboxDemo(root) {
   }
 
   return {
+    /** Local-only snapshot used by assistant features; never transmitted. */
+    getAssistantSnapshot() {
+      return state.emails.map((email) => ({
+        id: email.id,
+        from: { name: email.from?.name || "", email: email.from?.email || "" },
+        subject: email.subject || "",
+        body: email.body || "",
+        read: Boolean(email.read),
+        replied: Boolean(email.replied),
+        analysis: email.analysis || {},
+        deadline: email.deadline || null,
+        actions: email.actions || [],
+        ai: email.ai || {},
+        reply: email.reply || null
+      }));
+    },
+
     /** Aggregate metadata only: no subjects, senders or message bodies. */
     getAnalyticsSnapshot() {
       const ratio = (value) => {
