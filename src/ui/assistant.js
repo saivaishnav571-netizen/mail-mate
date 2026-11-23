@@ -1,4 +1,4 @@
-import { analyzeEmailAI, buildInboxBrief, buildSearchIndex, semanticSearch } from "../lib/ai.js";
+import { analyzeEmailAI, buildSearchIndex, semanticSearch } from "../lib/ai.js";
 
 const URGENCY_PATTERNS = [
   /\b(urgent|urgently|asap|immediately|action required|final notice|overdue|deadline|expires?|last chance)\b/i,
@@ -32,7 +32,6 @@ export function buildAssistantOverview(emails = [], reference = new Date()) {
     const ai = email.ai || analyzeEmailAI({ ...email, analysis }, reference);
     return { ...email, analysis, ai, actions: email.actions || [], deadline: email.deadline || null };
   });
-  const brief = buildInboxBrief(prepared, reference);
   const nonSpam = prepared.filter((email) => email.analysis?.category !== "spam");
   const unread = nonSpam.filter((email) => !email.read);
   const dueSoon = nonSpam.filter((email) => email.deadline?.date && ((email.deadline.date.getTime() - reference.getTime()) >= -24 * 60 * 60 * 1000) && ((email.deadline.date.getTime() - reference.getTime()) <= 48 * 60 * 60 * 1000)).length;
