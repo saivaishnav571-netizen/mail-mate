@@ -56,8 +56,8 @@ test("career stage counts include all defined stages and ignore unknown values",
 });
 
 test("agenda combines due tasks and events in date order and marks overdue", () => {
-  const agenda = buildAgenda([{ id: "t", title: "Finish report", due: "2026-11-22", status: "todo" }, { id: "done", title: "Done", due: "2026-11-21", status: "done" }], [{ id: "e", title: "Meeting", date: "2026-11-24" }], "2026-11-23");
-  assert.deepEqual(agenda.map((i) => i.id), ["t", "e"]);
+  const agenda = buildAgenda([{ id: "t", title: "Finish report", due: "2026-11-22", status: "todo" }, { id: "done", title: "Done", due: "2026-11-21", status: "done" }], [{ id: "e", title: "Meeting", date: "2026-11-24" }], "2026-11-23", [{ id: "a", company: "Acme", role: "Engineer", followUp: "2026-11-25" }]);
+  assert.deepEqual(agenda.map((i) => i.id), ["t", "e", "a"]);
   assert.equal(agenda[0].overdue, true);
-  assert.equal(agenda[1].overdue, false);
+  assert.equal(agenda[1].overdue, false);\n  assert.equal(agenda[2].kind, "Follow-up");\n  assert.equal(agenda[2].overdue, false);
 });
