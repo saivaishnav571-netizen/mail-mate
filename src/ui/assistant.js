@@ -190,7 +190,11 @@ export function initAssistant({ getEmailsSnapshot } = {}) {
     return typeof getEmailsSnapshot === "function" ? getEmailsSnapshot() || [] : [];
   }
 
-  let activeAction = "brief";\n\n  function run(action) {\n    activeAction = action;\n    const data = emails();
+  let activeAction = "brief";
+
+  function run(action) {
+    activeAction = action;
+    const data = emails();
     const overview = buildAssistantOverview(data);
     if (action === "brief") renderBrief(output, overview);
     if (action === "tasks") renderTasks(output, overview.tasks);
