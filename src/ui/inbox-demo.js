@@ -202,6 +202,7 @@ export function initInboxDemo(root) {
     state.feedbackHydrated = false;
     state.listSignature = "";
     state.renderedDetailId = null;
+    window.dispatchEvent(new Event("mailmate:inbox-updated"));
   }
 
   async function loadTestInbox({ announce = false } = {}) {
