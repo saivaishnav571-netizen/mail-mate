@@ -3,7 +3,7 @@ import { buildAgenda, calculateHabitStreak, countCareerStages, generateStudyPlan
 const STORAGE_KEY = "mailmate-productivity-v1";
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => { const d = new Date(); return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-"); };
 const makeId = () => globalThis.crypto?.randomUUID?.() || `mm-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 const safeDate = (date) => date ? new Date(`${date}T12:00:00`) : null;
 const dateLabel = (date) => safeDate(date)?.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" }) || "No date";
@@ -163,7 +163,7 @@ $("#expense-form").addEventListener("submit", (event) => { event.preventDefault(
 function renderFinance() {
   const month = today().slice(0, 7); const entries = state.expenses.filter((e) => (e.date || "").startsWith(month)); const summary = summarizeExpenses(entries, state.budget);
   const root = $("#finance-summary"); root.replaceChildren();
-  const metrics = el("div", "finance-metrics"); metrics.append(el("div", "finance-metric", "Spent this month"), el("strong", "", money(summary.total)), el("div", "finance-metric", "Budget remaining"), el("strong", "", summary.budget ? money(summary.remaining) : "Budget not set")); root.append(metrics);
+  const metrics = el("div", "finance-metrics"); const spentBox = el("div", "finance-metric-group"); spentBox.append(el("span", "finance-metric", "Spent this month"), el("strong", "", money(summary.total))); const remainingBox = el("div", "finance-metric-group"); remainingBox.append(el("span", "finance-metric", "Budget remaining"), el("strong", "", summary.budget ? money(summary.remaining) : "Budget not set")); metrics.append(spentBox, remainingBox); root.append(metrics);
   if (summary.budget) { const bar = el("div", "budget-track"); const fill = el("i", "budget-fill" + (summary.overBudget ? " over" : "")); fill.style.width = `${Math.min(100, summary.total / summary.budget * 100)}%`; bar.append(fill); root.append(bar, el("small", summary.overBudget ? "budget-warning" : "budget-note", summary.overBudget ? `Budget exceeded by ${money(summary.total - summary.budget)}` : `${money(summary.total)} of ${money(summary.budget)}`)); }
   const list = $("#expense-list"); list.replaceChildren(); if (!state.expenses.length) return empty(list, "No expenses recorded yet.");
   state.expenses.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((expense) => { const row = el("div", "expense-row"); row.append(el("span", "expense-category", expense.category), el("span", "expense-note", expense.note || "—"), el("small", "", dateLabel(expense.date)), el("strong", "", money(expense.amount)), button("×", "icon-button", () => { state.expenses = state.expenses.filter((e) => e.id !== expense.id); save(); })); list.append(row); });
