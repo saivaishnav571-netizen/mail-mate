@@ -1,5 +1,4 @@
 import { buildAgenda, calculateHabitStreak, countCareerStages, generateStudyPlan, searchNotes, sortTasks, splitTaskIdeas, summarizeExpenses } from "./productivity/core.js";
-import "./productivity.css";
 
 const STORAGE_KEY = "mailmate-productivity-v1";
 const $ = (selector, root = document) => root.querySelector(selector);
