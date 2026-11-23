@@ -14,6 +14,7 @@ import { initMotion } from "./lib/motion.js";
 import { initInteractions } from "./lib/interactions.js";
 import { initInboxDemo } from "./ui/inbox-demo.js";
 import { initIntelligenceCenter } from "./ui/intelligence.js";
+import { initAssistant } from "./ui/assistant.js";
 import { MODEL_INFO, classifyText } from "./lib/ai.js";
 
 /* ------------------------------------------------------------------ */
@@ -279,6 +280,7 @@ initModelCard();
 /* ------------------------------------------------------------------ */
 
 const inbox = initInboxDemo(document.querySelector("[data-demo]"));
+initAssistant({ getEmailsSnapshot: inbox?.getAssistantSnapshot });
 
 /* ------------------------------------------------------------------ */
 /*  AI Intelligence Center                                            */
