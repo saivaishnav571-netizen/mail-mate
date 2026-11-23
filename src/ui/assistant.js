@@ -53,7 +53,21 @@ export function buildAssistantOverview(emails = [], reference = new Date()) {
   const ranked = nonSpam.slice().sort((a, b) =>
     (b.ai?.priority?.score || 0) - (a.ai?.priority?.score || 0)
   );
-  return { brief, unread, deadlines, tasks, risky, ranked, dueSoon, highPriority: ranked.filter((email) => (email.ai?.priority?.score || 0) >= 60) };
+  const highPriority = ranked.filter((email) => (email.ai?.priority?.score || 0) >= 60);
+  const drafts = nonSpam.filter((email) => email.reply && !email.replied).length;
+  const focus = ranked.filter((email) => !email.replied).slice(0, 5);
+  const brief = {
+    lede: `${nonSpam.length} non-spam messages in this inbox. ${unread.length} unread, ${highPriority.length} high-priority, and ${dueSoon} deadlines within 48 hours. ${focus[0] ? `Start with “${focus[0].subject}” from ${focus[0].from?.name || "the sender"}.` : "Review the action items below to decide what remains."}`,
+    plan: [
+      ...(focus[0] ? [`Open “${focus[0].subject}” first — ${focus[0].ai?.priority?.factors?.[0]?.detail || "it ranks highest"}.`] : []),
+      ...(dueSoon ? [`Check ${dueSoon} deadline(s) within the next 48 hours.`] : []),
+      `Review ${tasks.length} detected action item(s); ${drafts} draft(s) are waiting for approval.`,
+      `Security scan flagged ${risky.length} message(s) for closer review.`
+    ],
+    stats: [{label:"Messages",value:nonSpam.length},{label:"Unread",value:unread.length},{label:"High priority",value:highPriority.length},{label:"Due ≤48h",value:dueSoon}],
+    focus, dueSoon, drafts, spam: prepared.length-nonSpam.length
+  };
+  return { brief, unread, deadlines, tasks, risky, ranked, dueSoon, highPriority };
 }
 
 function sentenceExcerpt(email, query) {
