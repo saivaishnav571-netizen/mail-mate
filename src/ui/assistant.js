@@ -57,7 +57,7 @@ export function buildAssistantOverview(emails = [], reference = new Date()) {
   const drafts = nonSpam.filter((email) => email.reply && !email.replied).length;
   const focus = ranked.filter((email) => !email.replied).slice(0, 5);
   const brief = {
-    lede: `${nonSpam.length} non-spam messages in this inbox. ${unread.length} unread, ${highPriority.length} high-priority, and ${dueSoon} deadlines within 48 hours. ${focus[0] ? `Start with “${focus[0].subject}” from ${focus[0].from?.name || "the sender"}.` : "Review the action items below to decide what remains."}`,
+    lede: emails.length === 0 ? "The inbox is loading, or no messages are available yet. This briefing refreshes when the inbox is ready." : `${nonSpam.length} non-spam messages in this inbox. ${unread.length} unread, ${highPriority.length} high-priority, and ${dueSoon} deadlines within 48 hours. ${focus[0] ? `Start with “${focus[0].subject}” from ${focus[0].from?.name || "the sender"}.` : "Review the action items below to decide what remains."}`,
     plan: [
       ...(focus[0] ? [`Open “${focus[0].subject}” first — ${focus[0].ai?.priority?.factors?.[0]?.detail || "it ranks highest"}.`] : []),
       ...(dueSoon ? [`Check ${dueSoon} deadline(s) within the next 48 hours.`] : []),
@@ -190,8 +190,7 @@ export function initAssistant({ getEmailsSnapshot } = {}) {
     return typeof getEmailsSnapshot === "function" ? getEmailsSnapshot() || [] : [];
   }
 
-  function run(action) {
-    const data = emails();
+  let activeAction = "brief";\n\n  function run(action) {\n    activeAction = action;\n    const data = emails();
     const overview = buildAssistantOverview(data);
     if (action === "brief") renderBrief(output, overview);
     if (action === "tasks") renderTasks(output, overview.tasks);
@@ -200,7 +199,7 @@ export function initAssistant({ getEmailsSnapshot } = {}) {
     actionButtons.forEach((button) => button.classList.toggle("is-active", button.dataset.assistantAction === action));
   }
 
-  actionButtons.forEach((button) => button.addEventListener("click", () => run(button.dataset.assistantAction)));
+  actionButtons.forEach((button) => button.addEventListener("click", () => run(button.dataset.assistantAction)));\n  window.addEventListener("mailmate:inbox-updated", () => run(activeAction));
   askButton?.addEventListener("click", () => run("ask"));
   query?.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
