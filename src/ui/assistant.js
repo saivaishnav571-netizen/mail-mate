@@ -203,7 +203,8 @@ export function initAssistant({ getEmailsSnapshot } = {}) {
     actionButtons.forEach((button) => button.classList.toggle("is-active", button.dataset.assistantAction === action));
   }
 
-  actionButtons.forEach((button) => button.addEventListener("click", () => run(button.dataset.assistantAction)));\n  window.addEventListener("mailmate:inbox-updated", () => run(activeAction));
+  actionButtons.forEach((button) => button.addEventListener("click", () => run(button.dataset.assistantAction)));
+  window.addEventListener("mailmate:inbox-updated", () => run(activeAction));
   askButton?.addEventListener("click", () => run("ask"));
   query?.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
