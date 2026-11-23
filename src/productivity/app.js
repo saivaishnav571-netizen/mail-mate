@@ -70,7 +70,7 @@ function renderOverview() {
   if (!focus.length) empty(taskTarget, "Nothing queued. Add a task to start.");
   focus.forEach((task) => { const row = el("div", "compact-row"); row.append(el("span", "priority-dot " + task.priority), el("span", "compact-title", task.title), el("span", "compact-meta", task.due ? dateLabel(task.due) : task.status)); taskTarget.append(row); });
   const agendaTarget = $("#overview-agenda"); agendaTarget.replaceChildren();
-  const agenda = buildAgenda(state.tasks, state.events, today()).filter((item) => item.date >= today()).slice(0, 5);
+  const agenda = buildAgenda(state.tasks, state.events, today(), state.applications).filter((item) => item.date >= today()).slice(0, 5);
   if (!agenda.length) empty(agendaTarget, "No upcoming dates. Add a task deadline or event.");
   agenda.forEach((item) => { const row = el("div", "compact-row"); row.append(el("span", "agenda-date", safeDate(item.date)?.toLocaleDateString(undefined, { month: "short", day: "numeric" }) || item.date), el("span", "compact-title", item.title), el("span", "compact-meta", item.kind)); agendaTarget.append(row); });
 }
@@ -140,7 +140,7 @@ $("#event-form").addEventListener("submit", (event) => { event.preventDefault();
 function renderAgenda() {
   const root = $("#agenda-list"); root.replaceChildren(); const agenda = buildAgenda(state.tasks, state.events, today());
   if (!agenda.length) return empty(root, "No dated tasks or events yet.");
-  agenda.forEach((item) => { const card = el("article", "agenda-card" + (item.overdue ? " overdue-card" : "")); card.append(el("div", "agenda-date-block", dateLabel(item.date)), el("div", "agenda-content", item.title), el("span", "kind-badge", item.kind)); if (item.kind === "Event") card.append(button("Delete", "text-button danger-text", () => { state.events = state.events.filter((e) => e.id !== item.id); save(); })); root.append(card); });
+  agenda.forEach((item) => { const card = el("article", "agenda-card" + (item.overdue ? " overdue-card" : "")); card.append(el("div", "agenda-date-block", dateLabel(item.date)), el("div", "agenda-content", item.title), el("span", "kind-badge", item.kind)); if (item.kind === "Event") card.append(button("Delete", "text-button danger-text", () => { state.events = state.events.filter((e) => e.id !== item.id); save(); }));\n    if (item.kind === "Follow-up") card.append(button("Review application", "text-button", () => openModule("career"))); root.append(card); });
 }
 
 $("#career-form").addEventListener("submit", (event) => { event.preventDefault(); const data = new FormData(event.currentTarget); state.applications.unshift({ id: makeId(), company: String(data.get("company")).trim(), role: String(data.get("role")).trim(), stage: data.get("stage"), followUp: data.get("date") || "", createdAt: new Date().toISOString() }); event.currentTarget.reset(); save(); announce("Application tracked."); });
@@ -165,7 +165,7 @@ function renderFinance() {
   const root = $("#finance-summary"); root.replaceChildren();
   const metrics = el("div", "finance-metrics"); const spentBox = el("div", "finance-metric-group"); spentBox.append(el("span", "finance-metric", "Spent this month"), el("strong", "", money(summary.total))); const remainingBox = el("div", "finance-metric-group"); remainingBox.append(el("span", "finance-metric", "Budget remaining"), el("strong", "", summary.budget ? money(summary.remaining) : "Budget not set")); metrics.append(spentBox, remainingBox); root.append(metrics);
   if (summary.budget) { const bar = el("div", "budget-track"); const fill = el("i", "budget-fill" + (summary.overBudget ? " over" : "")); fill.style.width = `${Math.min(100, summary.total / summary.budget * 100)}%`; bar.append(fill); root.append(bar, el("small", summary.overBudget ? "budget-warning" : "budget-note", summary.overBudget ? `Budget exceeded by ${money(summary.total - summary.budget)}` : `${money(summary.total)} of ${money(summary.budget)}`)); }
-  const list = $("#expense-list"); list.replaceChildren(); if (!state.expenses.length) return empty(list, "No expenses recorded yet.");
+  const categoryRoot = el("div", "category-breakdown"); const categories = Object.entries(summary.byCategory).sort((x, y) => y[1] - x[1]); categories.forEach(([category, amount]) => { const row = el("div", "category-row"); const head = el("div", "category-head"); head.append(el("span", "", category), el("strong", "", money(amount))); const track = el("div", "category-track"); const fill = el("i", "category-fill"); fill.style.width = summary.total ? `${amount / summary.total * 100}%` : "0%"; track.append(fill); row.append(head, track); categoryRoot.append(row); }); if (categories.length) root.append(categoryRoot);\n  const list = $("#expense-list"); list.replaceChildren(); if (!state.expenses.length) return empty(list, "No expenses recorded yet.");
   state.expenses.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach((expense) => { const row = el("div", "expense-row"); row.append(el("span", "expense-category", expense.category), el("span", "expense-note", expense.note || "—"), el("small", "", dateLabel(expense.date)), el("strong", "", money(expense.amount)), button("×", "icon-button", () => { state.expenses = state.expenses.filter((e) => e.id !== expense.id); save(); })); list.append(row); });
 }
 
