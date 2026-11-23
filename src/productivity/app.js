@@ -112,8 +112,7 @@ $("#breakdown-button").addEventListener("click", () => {
 
 $("#study-form").addEventListener("submit", (event) => {
   event.preventDefault(); const data = new FormData(event.currentTarget);
-  const subjects = String(data.get("subjects")).split(/[,
-]/).map((s) => s.trim()).filter(Boolean);
+  const subjects = String(data.get("subjects")).split(/[,\n]/).map((s) => s.trim()).filter(Boolean);
   const plan = generateStudyPlan({ subjects, examDate: data.get("examDate"), startDate: today(), hoursPerDay: data.get("hours") });
   state.studyPlan = plan; save(); announce(plan.length ? "Study plan created." : "Choose a future date and at least one subject.");
 });
