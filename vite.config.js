@@ -14,6 +14,11 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    rollupOptions: {
+      input: ["index.html", "productivity.html"]
+    }
+  },
   preview: {
     proxy: {
       "/api": {
