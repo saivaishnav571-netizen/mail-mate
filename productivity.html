@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#101827" />
+  <title>MailMate Productivity Hub</title>
+  <meta name="description" content="A separate productivity workspace for tasks, study planning, notes, calendar, career, habits and expenses.">
+  <link rel="icon" type="image/svg+xml" href="./public/favicon.svg" />
+  <link rel="stylesheet" href="./src/productivity.css" />
+  <script type="module" src="./src/productivity/app.js"></script>
+</head>
+<body class="productivity-page">
+  <div class="productivity-shell">
+    <aside class="productivity-sidebar">
+      <a class="hub-brand" href="./index.html"><span class="hub-logo">M</span><span>MailMate<span class="hub-brand-sub">PRODUCTIVITY</span></span></a>
+      <p class="sidebar-label">Workspace</p>
+      <nav class="module-nav" aria-label="Productivity modules">
+        <button class="module-nav-item active" data-module="overview"><span>⌂</span> Overview</button>
+        <button class="module-nav-item" data-module="tasks"><span>✓</span> Tasks</button>
+        <button class="module-nav-item" data-module="study"><span>◷</span> Study planner</button>
+        <button class="module-nav-item" data-module="notes"><span>▤</span> Notes</button>
+        <button class="module-nav-item" data-module="calendar"><span>▦</span> Calendar</button>
+        <button class="module-nav-item" data-module="career"><span>↗</span> Career tracker</button>
+        <button class="module-nav-item" data-module="habits"><span>✦</span> Habits</button>
+        <button class="module-nav-item" data-module="finance"><span>₹</span> Expense tracker</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <p>Local-first workspace</p>
+        <small>Your productivity data stays in this browser. It is separate from the inbox demo.</small>
+        <a class="back-link" href="./index.html">← Back to MailMate inbox</a>
+      </div>
+    </aside>
+
+    <main class="hub-main">
+      <header class="hub-topbar">
+        <div><p class="eyebrow">Personal workspace</p><h1 id="module-title">Overview</h1></div>
+        <div class="topbar-actions"><span class="local-pill"><i></i> Saved locally</span><button class="secondary-button" id="export-data" type="button">Export backup</button><button class="secondary-button danger-soft" id="reset-data" type="button">Reset hub</button></div>
+      </header>
+      <section class="module-panel active" id="panel-overview" data-panel="overview">
+        <div class="welcome-card"><div><p class="eyebrow">Your day, at a glance</p><h2>One workspace.<br><span>Everything in motion.</span></h2><p>Plan your work, study, career, habits and personal goals without touching your inbox.</p></div><div class="welcome-orbit" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><div class="orbit-core">MM</div><b>✦</b></div></div>
+        <div class="metric-grid" id="overview-metrics"></div>
+        <div class="overview-grid"><article class="hub-card"><div class="card-heading"><div><p class="eyebrow">Priority</p><h3>Tasks to focus on</h3></div><button class="text-button" data-go="tasks">View all →</button></div><div id="overview-tasks" class="compact-list"></div></article><article class="hub-card"><div class="card-heading"><div><p class="eyebrow">Coming up</p><h3>Agenda</h3></div><button class="text-button" data-go="calendar">Calendar →</button></div><div id="overview-agenda" class="compact-list"></div></article></div>
+        <div class="quick-actions"><button data-go="tasks"><span>＋</span> Add a task</button><button data-go="study"><span>◷</span> Build a study plan</button><button data-go="notes"><span>▤</span> Capture a note</button><button data-go="career"><span>↗</span> Track an application</button></div>
+      </section>
+
+      <section class="module-panel" id="panel-tasks" data-panel="tasks">
+        <div class="module-intro"><p>Capture, prioritize and break work into manageable steps.</p><div class="module-kpis" id="task-kpis"></div></div>
+        <article class="hub-card"><form id="task-form" class="form-row"><input name="title" required maxlength="180" placeholder="What needs to get done?" aria-label="Task title"><select name="priority" aria-label="Priority"><option value="medium">Medium priority</option><option value="high">High priority</option><option value="low">Low priority</option></select><input type="date" name="due" aria-label="Due date"><button class="primary-button">Add task</button></form><div class="smart-breakdown"><input id="breakdown-input" placeholder="Describe a bigger task to break into steps…"><button class="secondary-button" id="breakdown-button" type="button">Break it down</button></div><div id="breakdown-results" class="breakdown-results"></div></article>
+        <div class="filter-row"><button class="filter-button active" data-task-filter="all">All</button><button class="filter-button" data-task-filter="todo">To do</button><button class="filter-button" data-task-filter="doing">In progress</button><button class="filter-button" data-task-filter="done">Completed</button></div><div id="task-list" class="task-list"></div>
+      </section>
+
+      <section class="module-panel" id="panel-study" data-panel="study">
+        <div class="module-intro"><p>Turn subjects and an exam date into a lightweight revision schedule.</p></div>
+        <article class="hub-card"><form id="study-form" class="stack-form"><label>Subjects or topics<input name="subjects" required placeholder="DBMS, OS, Computer Networks, DSA"></label><div class="form-row"><label>Exam / target date<input name="examDate" type="date" required></label><label>Hours per day<input name="hours" type="number" min="0.5" max="12" step="0.5" value="2" required></label><button class="primary-button align-end">Generate plan</button></div></form></article><div id="study-plan" class="study-plan"></div>
+      </section>
+
+      <section class="module-panel" id="panel-notes" data-panel="notes">
+        <div class="module-intro"><p>Keep quick notes and make them searchable. Notes are saved on this device.</p></div>
+        <div class="notes-layout"><article class="hub-card"><form id="note-form" class="stack-form"><label>Title<input name="title" required maxlength="120" placeholder="Note title"></label><label>Content<textarea name="content" rows="5" placeholder="Write, paste or capture an idea…" required></textarea></label><label>Tags<input name="tags" placeholder="project, learning, idea"></label><button class="primary-button">Save note</button></form></article><article class="hub-card"><div class="card-heading"><h3>Saved notes</h3><input id="notes-search" class="search-input" placeholder="Search notes…"></div><div id="notes-list" class="notes-list"></div></article></div>
+      </section>
+
+      <section class="module-panel" id="panel-calendar" data-panel="calendar">
+        <div class="module-intro"><p>A simple agenda that combines task due dates and your own events.</p></div><article class="hub-card"><form id="event-form" class="form-row"><input name="title" required maxlength="160" placeholder="Event or appointment"><input name="date" type="date" required><button class="primary-button">Add event</button></form></article><div id="agenda-list" class="agenda-list"></div>
+      </section>
+
+      <section class="module-panel" id="panel-career" data-panel="career">
+        <div class="module-intro"><p>Track applications from wishlist to offer and keep follow-up dates visible.</p></div><article class="hub-card"><form id="career-form" class="form-row career-form"><input name="company" required placeholder="Company"><input name="role" required placeholder="Role / position"><select name="stage"><option>Wishlist</option><option>Applied</option><option>Assessment</option><option>Interview</option><option>Offer</option><option>Rejected</option></select><input name="date" type="date" aria-label="Follow-up date"><button class="primary-button">Add application</button></form></article><div id="career-summary" class="stage-summary"></div><div id="career-list" class="career-list"></div>
+      </section>
+
+      <section class="module-panel" id="panel-habits" data-panel="habits">
+        <div class="module-intro"><p>Build consistency with daily check-ins and streaks. No guilt—just a record.</p></div><article class="hub-card"><form id="habit-form" class="form-row"><input name="name" required maxlength="100" placeholder="Habit (e.g. read 20 minutes)"><button class="primary-button">Add habit</button></form></article><div id="habit-list" class="habit-list"></div>
+      </section>
+
+      <section class="module-panel" id="panel-finance" data-panel="finance">
+        <div class="module-intro"><p>Log expenses, set a monthly budget and see a simple category breakdown.</p></div><article class="hub-card budget-card"><form id="budget-form" class="form-row"><label>Monthly budget ₹<input name="budget" type="number" min="0" step="1" placeholder="Set your budget"></label><button class="secondary-button">Save budget</button></form><div id="finance-summary"></div></article><article class="hub-card"><form id="expense-form" class="form-row expense-form"><input name="amount" type="number" min="0.01" step="0.01" required placeholder="Amount ₹"><select name="category"><option>Food</option><option>Transport</option><option>Education</option><option>Shopping</option><option>Bills</option><option>Health</option><option>Other</option></select><input name="note" maxlength="100" placeholder="Description"><input name="date" type="date" required><button class="primary-button">Add expense</button></form><div id="expense-list" class="expense-list"></div></article>
+      </section>
+
+      <footer class="hub-footer"><span>MailMate Productivity Hub · local-first</span><span>Inbox remains separate and unchanged</span></footer>
+    </main>
+  </div>
+</body>
+</html>
