@@ -88,6 +88,7 @@ export function countCareerStages(applications = []) {
 export function buildAgenda(tasks = [], events = [], today = new Date().toISOString().slice(0, 10), applications = []) {
   return [
     ...tasks.filter((task) => task.due && task.status !== "done").map((task) => ({ id: task.id, date: task.due, title: task.title, kind: "Task", priority: task.priority || "medium" })),
-    ...events.filter((event) => event.date).map((event) => ({ id: event.id, date: event.date, title: event.title, kind: "Event", priority: "medium" })),\n    ...applications.filter((application) => application.followUp).map((application) => ({ id: application.id, date: application.followUp, title: `${application.company} — ${application.role}`, kind: "Follow-up", priority: "high" }))
+    ...events.filter((event) => event.date).map((event) => ({ id: event.id, date: event.date, title: event.title, kind: "Event", priority: "medium" })),
+    ...applications.filter((application) => application.followUp).map((application) => ({ id: application.id, date: application.followUp, title: `${application.company} — ${application.role}`, kind: "Follow-up", priority: "high" }))
   ].sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title)).map((item) => ({ ...item, overdue: item.date < today }));
 }
