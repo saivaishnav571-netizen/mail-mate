@@ -51,6 +51,7 @@
 
         <nav class="site-nav" id="site-nav" aria-label="Main navigation">
           <a href="#demo">Live inbox</a>
+          <a href="#assistant">AI Assistant</a>
           <a href="#how">How it works</a>
           <a href="#ai">AI model</a>
           <a href="#approval">Approval</a>
@@ -590,6 +591,30 @@
       </section>
 
       <!-- Before / after -->
+            <!-- AI Assistant suite -->
+      <section class="section assistant-section" id="assistant" aria-labelledby="assistant-title" data-assistant>
+        <div class="section-inner">
+          <div class="section-heading">
+            <p class="eyebrow">Inbox intelligence · Local processing</p>
+            <h2 id="assistant-title">Your inbox, <em>with a copilot.</em></h2>
+            <p class="section-intro">Get a daily focus plan, retrieve answers from messages, turn emails into action items, and screen suspicious patterns. Your inbox stays in this browser.</p>
+          </div>
+          <div class="assistant-shell">
+            <div class="assistant-toolbar" role="group" aria-label="Assistant tools">
+              <button type="button" data-assistant-action="brief" class="is-active">Daily briefing</button>
+              <button type="button" data-assistant-action="tasks">Action items</button>
+              <button type="button" data-assistant-action="security">Security scan</button>
+            </div>
+            <div class="assistant-query-row">
+              <input type="search" data-assistant-query placeholder="Ask: what is due this week? Find internship interviews…" aria-label="Ask your inbox" />
+              <button type="button" data-assistant-ask>Ask inbox</button>
+            </div>
+            <div class="assistant-output" data-assistant-output aria-live="polite"></div>
+            <p class="assistant-muted">Ask your inbox uses local TF-IDF retrieval and shows source messages. It is extractive, not a connected generative AI service. Security screening is heuristic and should not replace verification.</p>
+          </div>
+        </div>
+      </section>
+
       <section class="section compare-section" id="difference" aria-labelledby="difference-title">
         <div class="wrap">
           <div class="section-head section-head--split" data-reveal>
@@ -1921,6 +1946,7 @@
     <nav class="section-rail" aria-label="Section progress" data-section-rail>
       <a href="#top" data-rail="top"><span class="rail-dot"></span><span class="rail-label">Start</span></a>
       <a href="#demo" data-rail="demo"><span class="rail-dot"></span><span class="rail-label">Live inbox</span></a>
+      <a href="#assistant" data-rail="assistant"><span class="rail-dot"></span><span class="rail-label">AI Assistant</span></a>
       <a href="#difference" data-rail="difference"><span class="rail-dot"></span><span class="rail-label">Difference</span></a>
       <a href="#how" data-rail="how"><span class="rail-dot"></span><span class="rail-label">Pipeline</span></a>
       <a href="#ai" data-rail="ai"><span class="rail-dot"></span><span class="rail-label">AI model</span></a>

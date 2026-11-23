@@ -198,3 +198,15 @@ MailMate is a portfolio prototype, not a mail service. Approval is simulated, se
 ## License
 
 MIT
+
+
+## AI Assistant suite
+
+The **AI Assistant** section adds a local daily briefing, extractive inbox Q&A, action-item list, and heuristic security scan. It reads the current browser inbox snapshot only; it does not transmit message bodies or subjects.
+
+- **Daily briefing:** priority-ranked focus, unread/high-priority counts, near-term deadlines, and actions.
+- **Ask your inbox:** TF-IDF retrieval with sentence excerpts and source email context. This is extractive retrieval, not an LLM answer.
+- **Action items:** surfaced tasks with detected deadline information.
+- **Security scan:** warning patterns for credential requests, money requests, urgency/prize language, secrecy, short links, and attachment prompts. This is not a definitive phishing detector.
+
+See [docs/ai-assistant.md](docs/ai-assistant.md) for privacy and limitations.
