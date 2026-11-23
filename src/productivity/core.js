@@ -18,7 +18,7 @@ export function sortTasks(tasks = [], today = new Date().toISOString().slice(0, 
 }
 
 export function splitTaskIdeas(text = "") {
-  const parts = String(text).split(/\s*(?:;|,|\bthen\b|\band then\b|\band\b)\s*/i).map((s) => s.trim()).filter(Boolean);
+  const parts = String(text).split(/\s*(?:;|,|\band then\b|\bthen\b|\band\b)\s*/i).map((s) => s.trim()).filter(Boolean);
   return [...new Set(parts)].slice(0, 6);
 }
 
